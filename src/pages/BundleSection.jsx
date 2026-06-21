@@ -1114,7 +1114,7 @@ const BundleSection = ({ onAddToCart, isStoreOpen = true }) => {
               fontFamily: "'DM Sans',sans-serif",
             }}
           >
-            Mix & match any items — save more
+            Mix & match flavours · 65g per piece · save more when you bundle
           </p>
         </div>
         {isAdmin && (

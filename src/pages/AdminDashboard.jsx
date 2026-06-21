@@ -167,6 +167,7 @@ const AdminDashboard = () => {
             { key: "instapay", label: "InstaPay" },
             { key: "regions", label: "Regions" },
             { key: "pickup", label: "Pickup" },
+            { key: "categories", label: "Categories" },
           ].map((t) => (
             <button
               key={t.key}
@@ -192,6 +193,7 @@ const AdminDashboard = () => {
         {tab === "instapay" && <InstapayTab refreshKey={refreshKey} />}
         {tab === "regions" && <RegionsTab refreshKey={refreshKey} />}
         {tab === "pickup" && <PickupLocationsTab refreshKey={refreshKey} />}
+        {tab === "categories" && <CategoriesTab refreshKey={refreshKey} />}
       </div>
     </div>
   );
@@ -1836,6 +1838,306 @@ const DiscountsTab = ({ refreshKey }) => {
                 }}
               >
                 This cannot be undone.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn-ghost"
+                onClick={() => setDeleteTarget(null)}
+              >
+                Cancel
+              </button>
+              <button className="btn-danger" onClick={confirmDelete}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+/* ═══════════════════════════════════════════════
+   CATEGORIES TAB
+═══════════════════════════════════════════════ */
+const EMPTY_CAT_FORM = {
+  name: "",
+  description: "",
+  sortOrder: "",
+  active: true,
+};
+
+const CategoriesTab = ({ refreshKey }) => {
+  const [cats, setCats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
+  const [form, setForm] = useState(EMPTY_CAT_FORM);
+  const [editingId, setEditingId] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  useEffect(() => {
+    API.get("/categories/all")
+      .then((r) => setCats(r.data))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [refreshKey]);
+
+  const openAdd = () => {
+    setEditingId(null);
+    setForm(EMPTY_CAT_FORM);
+    setFormOpen(true);
+  };
+
+  const openEdit = (c) => {
+    setEditingId(c._id);
+    setForm({
+      name: c.name,
+      description: c.description || "",
+      sortOrder: c.sortOrder ?? "",
+      active: c.active,
+    });
+    setFormOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!form.name.trim()) return alert("Category name is required.");
+    setSaving(true);
+    try {
+      const payload = {
+        ...form,
+        sortOrder: form.sortOrder !== "" ? Number(form.sortOrder) : 0,
+      };
+      if (editingId) {
+        const { data } = await API.put(`/categories/${editingId}`, payload);
+        setCats((prev) => prev.map((c) => (c._id === editingId ? data : c)));
+      } else {
+        const { data } = await API.post("/categories", payload);
+        setCats((prev) =>
+          [...prev, data].sort(
+            (a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name),
+          ),
+        );
+      }
+      setFormOpen(false);
+    } catch (err) {
+      alert(err?.response?.data?.message || "Save failed.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggle = async (c) => {
+    try {
+      const { data } = await API.put(`/categories/${c._id}`, {
+        active: !c.active,
+      });
+      setCats((prev) => prev.map((x) => (x._id === c._id ? data : x)));
+    } catch {
+      alert("Failed to update.");
+    }
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await API.delete(`/categories/${deleteTarget}`);
+      setCats((prev) => prev.filter((c) => c._id !== deleteTarget));
+    } catch {
+      alert("Delete failed.");
+    } finally {
+      setDeleteTarget(null);
+    }
+  };
+
+  return (
+    <>
+      <div className="admin-toolbar">
+        <div className="admin-toolbar-title">Categories</div>
+        <button className="admin-add-btn" onClick={openAdd}>
+          + New Category
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="admin-loading">Loading categories…</div>
+      ) : cats.length === 0 ? (
+        <div className="admin-empty">
+          <h3>No categories yet</h3>
+          <p>Add your first category to organise your menu.</p>
+        </div>
+      ) : (
+        <div className="admin-list">
+          {cats.map((c) => (
+            <div key={c._id} className="discount-card">
+              <div className="discount-code-chip">{c.name}</div>
+              <div className="discount-card-info">
+                <div className="discount-card-value" style={{ fontSize: 14 }}>
+                  {c.description || (
+                    <span style={{ color: "#c0b0a0", fontStyle: "italic" }}>
+                      No description
+                    </span>
+                  )}
+                </div>
+                <div className="discount-card-meta">
+                  {c.active ? (
+                    "Active"
+                  ) : (
+                    <span style={{ color: "#b02020" }}>Inactive</span>
+                  )}
+                  {" · "}slug: <code style={{ fontSize: 10 }}>{c.slug}</code>
+                  {c.sortOrder > 0 && ` · Order: ${c.sortOrder}`}
+                </div>
+              </div>
+              <div className="discount-card-actions">
+                <button
+                  className={`toggle-btn ${c.active ? "on" : ""}`}
+                  onClick={() => handleToggle(c)}
+                  title={c.active ? "Deactivate" : "Activate"}
+                />
+                <button
+                  className="icon-btn"
+                  onClick={() => openEdit(c)}
+                  title="Edit"
+                >
+                  <i className="ti ti-pencil" />
+                </button>
+                <button
+                  className="icon-btn icon-btn--danger"
+                  onClick={() => setDeleteTarget(c._id)}
+                  title="Delete"
+                >
+                  <i className="ti ti-trash" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Add / Edit Modal ── */}
+      {formOpen && (
+        <div className="modal-overlay" onClick={() => setFormOpen(false)}>
+          <div
+            className="modal-sheet modal-sheet--sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2>{editingId ? "Edit Category" : "New Category"}</h2>
+              <button
+                className="modal-close"
+                onClick={() => setFormOpen(false)}
+              >
+                &#x2715;
+              </button>
+            </div>
+            <div className="modal-body">
+              <label className="form-label">Name *</label>
+              <input
+                className="form-input"
+                placeholder="e.g. Cakes, Hot Drinks, Seasonal"
+                value={form.name}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, name: e.target.value }))
+                }
+              />
+
+              <label className="form-label" style={{ marginTop: 12 }}>
+                Description
+              </label>
+              <input
+                className="form-input"
+                placeholder="Short description shown to customers (optional)"
+                value={form.description}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, description: e.target.value }))
+                }
+              />
+
+              <label className="form-label" style={{ marginTop: 12 }}>
+                Sort Order
+              </label>
+              <input
+                className="form-input"
+                type="number"
+                min="0"
+                placeholder="0 = first (lower numbers appear first)"
+                value={form.sortOrder}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, sortOrder: e.target.value }))
+                }
+              />
+
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  marginTop: 16,
+                  cursor: "pointer",
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: "#5a4030",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={form.active}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, active: e.target.checked }))
+                  }
+                />
+                Active (visible to customers)
+              </label>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-ghost" onClick={() => setFormOpen(false)}>
+                Cancel
+              </button>
+              <button
+                className="btn-primary"
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving
+                  ? "Saving…"
+                  : editingId
+                    ? "Save Changes"
+                    : "Create Category"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Confirm Modal ── */}
+      {deleteTarget && (
+        <div className="modal-overlay" onClick={() => setDeleteTarget(null)}>
+          <div
+            className="modal-sheet modal-sheet--sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2>Delete category?</h2>
+              <button
+                className="modal-close"
+                onClick={() => setDeleteTarget(null)}
+              >
+                &#x2715;
+              </button>
+            </div>
+            <div className="modal-body">
+              <p
+                style={{
+                  color: "#9a8878",
+                  fontSize: 14,
+                  margin: 0,
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                Products in this category won't be deleted — they'll just lose
+                their category assignment. This cannot be undone.
               </p>
             </div>
             <div className="modal-footer">

@@ -8,22 +8,6 @@ import BundleSection from "./BundleSection";
 import { useCart } from "../context/CartContext";
 
 /* ─── constants ─────────────────────────────── */
-const CATEGORIES = [
-  { label: "All", value: "", query: {} },
-  { label: "Bundles", value: "bundles", query: { category: "bundles" } },
-  { label: "Limo Roll", value: "Limo Roll", query: { category: "Limo Roll" } },
-  {
-    label: "Signature Flavours",
-    value: "signature",
-    query: { category: "Limo Roll", flavorType: "signature" },
-  },
-  {
-    label: "Premium Flavours",
-    value: "premium",
-    query: { category: "Limo Roll", flavorType: "premium" },
-  },
-  { label: "Beverages", value: "Beverages", query: { category: "Beverages" } },
-];
 
 const EMPTY_SIZE = {
   label: "",
@@ -35,7 +19,7 @@ const EMPTY_SIZE = {
 const EMPTY_FORM = {
   name: "",
   description: "",
-  category: "Limo Roll",
+  category: "",
   flavorType: null,
   sizes: [{ ...EMPTY_SIZE }],
   flavors: [],
@@ -66,6 +50,46 @@ const Menu = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const { addItem, addBundle } = useCart();
   const [toast, setToast] = useState(null);
+
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    API.get("/categories")
+      .then((r) => setCategories(r.data))
+      .catch(console.error);
+  }, []);
+
+  // Build the tabs array dynamically from fetched categories.
+  // "All" and "Bundles" are always present; the rest come from the DB.
+  // AFTER
+  const CATEGORIES = [
+    { label: "All", value: "", query: {} },
+    { label: "Bundles", value: "bundles", query: { category: "bundles" } },
+  ]
+    .concat(
+      categories.map((c) => ({
+        label: c.name,
+        value: c.slug,
+        query: { category: c.name },
+      })),
+    )
+    .concat(
+      // Flavor subtabs — only show if "Limo Roll" category exists in DB
+      categories.some((c) => c.name === "Limo-Roll")
+        ? [
+            {
+              label: "Signature Flavours",
+              value: "signature",
+              query: { category: "Limo-Roll", flavorType: "signature" },
+            },
+            {
+              label: "Premium Flavours",
+              value: "premium",
+              query: { category: "Limo-Roll", flavorType: "premium" },
+            },
+          ]
+        : [],
+    );
   const toastTimerRef = useRef(null);
 
   const showToast = (message) => {
@@ -91,7 +115,7 @@ const Menu = () => {
     } finally {
       setLoading(false);
     }
-  }, [activeTab]);
+  }, [activeTab, categories]);
 
   useEffect(() => {
     fetchProducts();
@@ -349,11 +373,9 @@ const Menu = () => {
                   setForm((f) => ({ ...f, category: e.target.value }))
                 }
               >
-                {CATEGORIES.filter(
-                  (c) => c.value && !["signature", "premium"].includes(c.value),
-                ).map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
+                {categories.map((c) => (
+                  <option key={c._id} value={c.name}>
+                    {c.name}
                   </option>
                 ))}
               </select>
