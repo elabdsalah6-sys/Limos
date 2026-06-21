@@ -59,8 +59,14 @@ const Footer = () => {
             <Link to="/menu" className="footer-link">
               All Products
             </Link>
-            <Link to="/menu?category=cinnabon" className="footer-link">
-              Cinnabons
+            <Link to="/menu?category=Limo Roll" className="footer-link">
+              Limo Rolls
+            </Link>
+            <Link to="/menu?category=bundles" className="footer-link">
+              Bundles
+            </Link>
+            <Link to="/menu?category=Beverages" className="footer-link">
+              Beverages
             </Link>
           </div>
           <div className="footer-links-col">
