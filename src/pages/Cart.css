@@ -1,0 +1,234 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap");
+
+.cart-page {
+  background: #faf5ef;
+  min-height: 100vh;
+  padding: 32px 16px 80px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.cart-empty {
+  background: #f5f0e8;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: "DM Sans", sans-serif;
+}
+.cart-empty h2 {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a0f05;
+}
+.cart-empty p {
+  color: #9a8878;
+  font-size: 13px;
+}
+
+.cart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.cart-header h1 {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 36px;
+  font-weight: 700;
+  color: #1a0f05;
+  margin: 0;
+}
+.cart-clear-btn {
+  background: none;
+  border: none;
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  color: #9a8878;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cart-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.cart-item {
+  background: #ede8e0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cart-item-img {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e8e0d4;
+  flex-shrink: 0;
+}
+.cart-item-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cart-item-img--bundle {
+  background: #6b3e1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #f5f0e8;
+}
+
+.cart-item-info {
+  flex: 1;
+  min-width: 0;
+}
+.cart-item-name {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a0f05;
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cart-item-meta {
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  color: #9a8878;
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cart-item-unit {
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  color: #b8a898;
+  margin: 0;
+}
+.cart-item-saving {
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #c4712a;
+  margin: 2px 0 0;
+}
+
+.cart-item-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.cart-item-price {
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a0f05;
+}
+.cart-item-remove {
+  background: none;
+  border: none;
+  color: #c0b0a0;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+.cart-item-remove:hover {
+  color: #b03020;
+}
+
+.cart-item-stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f5f0e8;
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+.cart-item-stepper button {
+  background: none;
+  border: none;
+  color: #5a4030;
+  font-size: 16px;
+  font-weight: 300;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "DM Sans", sans-serif;
+}
+.cart-item-stepper button:hover {
+  color: #c4712a;
+}
+.cart-item-stepper span {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a0f05;
+  min-width: 16px;
+  text-align: center;
+}
+
+.cart-footer {
+  border-top: 1px solid #e5ddd2;
+  padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.cart-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: "DM Sans", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a0f05;
+}
+.cart-total-price {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a0f05;
+}
+
+.cart-checkout-btn {
+  width: 100%;
+  text-align: center;
+  padding: 14px;
+  font-size: 13px;
+  text-decoration: none;
+  display: block;
+}
+
+.cart-login-prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cart-login-prompt p {
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  color: #9a8878;
+  text-align: center;
+  margin: 0;
+}

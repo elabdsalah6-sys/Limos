@@ -1,0 +1,151 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap");
+
+.profile-page {
+  background: #faf5ef;
+  min-height: 100vh;
+  padding: 32px 16px 80px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.profile-loading {
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  color: #9a8878;
+  text-align: center;
+  margin-top: 60px;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #1a0f05;
+  color: #f5f0e8;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 28px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profile-name {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a0f05;
+  margin: 0 0 2px;
+}
+
+.profile-role {
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  color: #9a8878;
+  text-transform: capitalize;
+  margin: 0;
+}
+
+.profile-section {
+  background: #ede8e0;
+  border-radius: 14px;
+  padding: 18px 16px;
+  margin-bottom: 16px;
+}
+
+.profile-section h2 {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a0f05;
+  margin: 0 0 14px;
+}
+
+.profile-section--confirm {
+  border: 1.5px solid #c4712a30;
+}
+
+.profile-confirm-note {
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  color: #9a8878;
+  margin: -8px 0 12px;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.profile-field label {
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a6858;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.profile-optional {
+  font-weight: 400;
+  text-transform: none;
+  color: #b8a898;
+  letter-spacing: 0;
+}
+
+.profile-field input,
+.profile-field textarea {
+  background: #f5f0e8;
+  border: 1px solid #d8d0c4;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  color: #1a0f05;
+  outline: none;
+  resize: none;
+  transition: border-color 0.15s;
+}
+
+.profile-field input:focus,
+.profile-field textarea:focus {
+  border-color: #c4712a;
+}
+
+.profile-error {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  color: #b03020;
+  text-align: center;
+  margin: 0 0 12px;
+}
+
+.profile-success {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  color: #1a7a4a;
+  text-align: center;
+  margin: 0 0 12px;
+}
+
+.profile-save-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 14px;
+  margin-top: 8px;
+}
