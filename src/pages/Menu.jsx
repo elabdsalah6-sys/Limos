@@ -653,8 +653,8 @@ const ProductCard = ({
 
   const hasOffer = p.offer?.active && p.offer?.label;
   const isAvailable = p.available !== false;
-  // Controls only show when the item is in stock AND the store is open.
-  const canOrder = isAvailable && isStoreOpen;
+  // Controls only show when in stock, store is open, and viewer isn't an admin.
+  const canOrder = isAvailable && isStoreOpen && !isAdmin;
 
   const displaySize = p.sizes?.find((s) => s.offerActive) ?? p.sizes?.[0];
   const anySizeOffer = p.sizes?.some((s) => s.offerActive);
