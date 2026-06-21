@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import API from "../api/axios";
 import "./Profile.css";
 
 const Profile = () => {
   const { user, login } = useAuth();
-  const token = user?.token;
 
   const [form, setForm] = useState({
     name: "",
@@ -22,11 +22,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error("Failed to load profile.");
-        const data = await res.json();
+        const { data } = await API.get("/auth/me");
         setForm((prev) => ({
           ...prev,
           name: data.name || "",
@@ -35,13 +31,17 @@ const Profile = () => {
           address: data.address || "",
         }));
       } catch (err) {
-        setError(err.message);
+        setError(
+          err?.response?.data?.message ||
+            err.message ||
+            "Failed to load profile.",
+        );
       } finally {
         setLoading(false);
       }
     };
     fetchProfile();
-  }, [token]);
+  }, []);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -59,17 +59,7 @@ const Profile = () => {
     setSuccess("");
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/profile", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to update profile.");
+      const { data } = await API.put("/auth/profile", form);
 
       // update stored user so navbar reflects new name
       login({ ...user, name: data.name, email: data.email });
@@ -77,7 +67,11 @@ const Profile = () => {
       setForm((prev) => ({ ...prev, currentPassword: "", newPassword: "" }));
       setSuccess("Profile updated successfully.");
     } catch (err) {
-      setError(err.message);
+      setError(
+        err?.response?.data?.message ||
+          err.message ||
+          "Failed to update profile.",
+      );
     } finally {
       setSaving(false);
     }
