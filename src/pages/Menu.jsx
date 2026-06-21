@@ -9,6 +9,7 @@ import { useCart } from "../context/CartContext";
 
 /* ─── constants ─────────────────────────────── */
 const CATEGORIES = [
+  { label: "Bundles", value: "bundles", query: { category: "bundles" } },
   { label: "Limo Roll", value: "Limo Roll", query: { category: "Limo Roll" } },
   {
     label: "Signature Flavours",
