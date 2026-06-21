@@ -79,8 +79,8 @@ const Footer = () => {
             >
               limosbon@gmail.com
             </a>
-            <a href="tel:+20XXXXXXXXXX" className="footer-link">
-              +20 XXX XXX XXXX
+            <a href="tel:+201094746929" className="footer-link">
+              +20 1094746929
             </a>
           </div>{" "}
         </div>
