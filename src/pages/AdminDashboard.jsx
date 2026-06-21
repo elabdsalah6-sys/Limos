@@ -42,7 +42,10 @@ const AdminDashboard = () => {
   const beepIntervalRef = useRef(null);
 
   useEffect(() => {
-    const socket = io("http://localhost:5000");
+    const socket = io(
+      process.env.REACT_APP_API_URL?.replace("/api", "") ||
+        "http://localhost:5000",
+    );
     socketRef.current = socket;
 
     const bumpRefresh = () => setRefreshKey((k) => k + 1);

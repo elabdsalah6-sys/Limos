@@ -22,7 +22,7 @@ export const StoreProvider = ({ children }) => {
 
     fetchStatus();
 
-    const socket = io("http://localhost:5000");
+const socket = io(process.env.REACT_APP_API_URL?.replace("/api", "") || "http://localhost:5000");
     socket.on("store_status_changed", ({ isOpen }) => {
       setIsOpen(isOpen);
     });
