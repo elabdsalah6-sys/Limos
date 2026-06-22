@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import API from "../api/axios";
 import { useAuth } from "../context/AuthContext";
+import { uploadImage } from "../utils/uploadImage";
 
 /* ═══════════════════════════════════════════════
    HELPERS
@@ -47,6 +48,7 @@ const BundleFormModal = ({ bundle, onClose, onSaved }) => {
     };
   });
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [catalog, setCatalog] = useState([]);
 
   useEffect(() => {
@@ -413,16 +415,25 @@ const BundleFormModal = ({ bundle, onClose, onSaved }) => {
               type="file"
               accept="image/*"
               style={{ display: "none" }}
-              onChange={(e) => {
+              onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (ev) =>
-                  setForm((f) => ({ ...f, image: ev.target.result }));
-                reader.readAsDataURL(file);
+                setUploading(true);
+                try {
+                  const url = await uploadImage(file);
+                  setForm((f) => ({ ...f, image: url }));
+                } catch (err) {
+                  alert("Image upload failed, please try again");
+                } finally {
+                  setUploading(false);
+                }
               }}
             />
-            {form.image ? (
+            {uploading ? (
+              <div className="form-img-placeholder">
+                <span className="form-img-placeholder-text">Uploading...</span>
+              </div>
+            ) : form.image ? (
               <img
                 src={form.image}
                 alt="preview"

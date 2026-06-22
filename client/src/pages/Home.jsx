@@ -7,6 +7,7 @@ import { useCart } from "../context/CartContext";
 import { useStore } from "../context/StoreContext";
 import API from "../api/axios";
 import Reviews from "./Reviews";
+import { uploadImage } from "../utils/uploadImage";
 
 const HERO_IMG_KEY = "limos_hero_image";
 
@@ -212,16 +213,16 @@ const Home = () => {
   }, []);
 
   // Hero photo handlers
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = ev.target.result;
-      localStorage.setItem(HERO_IMG_KEY, dataUrl);
-      setHeroBg(dataUrl);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const url = await uploadImage(file);
+      localStorage.setItem(HERO_IMG_KEY, url);
+      setHeroBg(url);
+    } catch (err) {
+      alert("Image upload failed, please try again");
+    }
   };
 
   const handleRemoveBg = () => {

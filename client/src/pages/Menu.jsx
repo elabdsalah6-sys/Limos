@@ -6,6 +6,7 @@ import "./Menu.css";
 import "./Home.css";
 import BundleSection from "./BundleSection";
 import { useCart } from "../context/CartContext";
+import { uploadImage } from "../utils/uploadImage";
 
 /* ─── constants ─────────────────────────────── */
 
@@ -52,6 +53,7 @@ const Menu = () => {
   const [toast, setToast] = useState(null);
 
   const [categories, setCategories] = useState([]);
+  const [imageUploading, setImageUploading] = useState(false);
 
   useEffect(() => {
     API.get("/categories")
@@ -395,7 +397,13 @@ const Menu = () => {
 
               <label className="form-label">Photo</label>
               <div className="form-img-upload-area">
-                {form.image ? (
+                {imageUploading ? (
+                  <div className="form-img-placeholder">
+                    <span className="form-img-placeholder-text">
+                      Uploading...
+                    </span>
+                  </div>
+                ) : form.image ? (
                   <img
                     src={form.image}
                     alt="preview"
@@ -414,13 +422,18 @@ const Menu = () => {
                     type="file"
                     accept="image/*"
                     style={{ display: "none" }}
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      const reader = new FileReader();
-                      reader.onload = (ev) =>
-                        setForm((f) => ({ ...f, image: ev.target.result }));
-                      reader.readAsDataURL(file);
+                      setImageUploading(true);
+                      try {
+                        const url = await uploadImage(file);
+                        setForm((f) => ({ ...f, image: url }));
+                      } catch (err) {
+                        alert("Image upload failed, please try again");
+                      } finally {
+                        setImageUploading(false);
+                      }
                     }}
                   />
                   Choose from Device
