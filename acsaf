@@ -1,0 +1,8 @@
+[33mcommit e702e0504a3f9d820f799d79431d759ab7e1e397[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Salah <salahelabd000@gmail.com>
+Date:   Mon Jun 22 14:59:04 2026 +0300
+
+    remove beverages from footer (final)
+
+ client/src/component/Footer.jsx | 2 [32m+[m[31m-[m
+ 1 file changed, 1 insertion(+), 1 deletion(-)
