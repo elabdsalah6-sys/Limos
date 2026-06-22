@@ -328,7 +328,7 @@ const Home = () => {
           </p>
           <div className="hero-actions">
             <Link to="/menu" className="home-cta">
-              Order Now
+              Order Now.
             </Link>
             <Link to="/menu" className="hero-secondary-link">
               See the menu
