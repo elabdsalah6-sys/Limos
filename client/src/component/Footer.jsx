@@ -65,9 +65,6 @@ const Footer = () => {
             <Link to="/menu?category=bundles" className="footer-link">
               Bundles
             </Link>
-            <Link to="/menu?category=Beverages" className="footer-link">
-              Beverages
-            </Link>
           </div>
           <div className="footer-links-col">
             <div className="footer-links-label">Contact</div>
