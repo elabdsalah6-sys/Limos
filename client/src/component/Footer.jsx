@@ -98,7 +98,7 @@ const Footer = () => {
 
         <div className="footer-dev-card">
           <span className="footer-dev-info">
-            <span className="footer-dev-name">Salah Elabd</span>
+            <span className="footer-dev-name">Salah Elabd.</span>
             <span className="footer-dev-role">Web Developer</span>
           </span>
           <span className="footer-dev-links">
