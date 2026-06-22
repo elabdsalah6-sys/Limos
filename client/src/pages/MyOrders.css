@@ -1,0 +1,238 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap");
+
+.myorders-page {
+  background: #faf5ef;
+  min-height: 100vh;
+  padding: 32px 16px 80px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.myorders-header h1 {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 36px;
+  font-weight: 700;
+  color: #1a0f05;
+  margin: 0 0 24px;
+}
+
+.myorders-loading,
+.myorders-error,
+.myorders-empty {
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  color: #9a8878;
+  text-align: center;
+  margin-top: 60px;
+}
+
+.myorders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.myorders-card {
+  background: #ede8e0;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.myorders-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.myorders-date {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a0f05;
+  margin: 0 0 2px;
+}
+
+.myorders-id {
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  color: #9a8878;
+  margin: 0;
+}
+
+.myorders-status {
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.03em;
+}
+
+.status--pending {
+  background: #f5e6d0;
+  color: #c4712a;
+}
+.status--confirmed {
+  background: #d0e8f5;
+  color: #1a6fa0;
+}
+.status--preparing {
+  background: #f5ecd0;
+  color: #a07a1a;
+}
+.status--delivered {
+  background: #d0f5e0;
+  color: #1a7a4a;
+}
+.status--cancelled {
+  background: #f5d0d0;
+  color: #a01a1a;
+}
+
+.status--on-the-way {
+  background: #eef4ff;
+  color: #2a4aaa;
+}
+.myorders-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid #d8d0c4;
+  border-bottom: 1px solid #d8d0c4;
+  padding: 10px 0;
+}
+
+.myorders-item-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  color: #1a0f05;
+}
+
+.myorders-item-name {
+  flex: 1;
+}
+
+.myorders-item-size {
+  color: #9a8878;
+  font-size: 12px;
+}
+
+.myorders-item-qty {
+  color: #9a8878;
+  font-size: 12px;
+}
+
+.myorders-item-price {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.myorders-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.myorders-total {
+  display: flex;
+  gap: 8px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a0f05;
+}
+
+.myorders-cancel-btn {
+  background: none;
+  border: 1px solid #c0a090;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  color: #a03020;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.myorders-cancel-btn:hover {
+  background: #f5d0d0;
+}
+
+.myorders-cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Progress bar */
+.myorders-progress {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 4px;
+}
+
+.myorders-progress-step {
+  font-family: "DM Sans", sans-serif;
+  font-size: 10px;
+  color: #b8a898;
+  white-space: nowrap;
+  position: relative;
+}
+
+.myorders-progress-step.active {
+  color: #c4712a;
+  font-weight: 600;
+}
+
+.myorders-progress-step.done {
+  color: #1a7a4a;
+  font-weight: 500;
+}
+
+.myorders-progress-divider {
+  flex: 1;
+  height: 1px;
+  background: #d8d0c4;
+  margin: 0 6px;
+}
+
+.myorders-progress-divider.done {
+  background: #1a7a4a;
+}
+
+.myorders-subtotal-row {
+  border-top: 1px dashed #e0d4c5;
+  margin-top: 6px;
+  padding-top: 6px;
+  color: #8a7060;
+  font-size: 13px;
+}
+
+.myorders-delivery-row {
+  color: #8a7060;
+  font-size: 13px;
+}
+
+.myorders-delivery-row .myorders-item-price {
+  color: #c4712a;
+  font-weight: 600;
+}
+
+.myorders-discount-row {
+  font-size: 13px;
+}
+
+.myorders-discount-label {
+  color: #7a9a60;
+}
+
+.myorders-discount-saving {
+  color: #7a9a60;
+  font-weight: 600;
+}
