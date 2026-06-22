@@ -43,11 +43,9 @@ const Checkout = () => {
     if (!user?.token) return;
     const fetchProfile = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/auth/me", {
+        const { data } = await API.get("/auth/me", {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        if (!res.ok) return;
-        const data = await res.json();
         setForm((prev) => ({
           ...prev,
           name: data.name || prev.name,
@@ -70,17 +68,15 @@ const Checkout = () => {
 
   /* ── fetch delivery regions ── */
   useEffect(() => {
-    fetch("http://localhost:5000/api/delivery-regions")
-      .then((r) => r.json())
-      .then((data) => setRegions(data))
+    API.get("/delivery-regions")
+      .then((r) => setRegions(r.data))
       .catch(console.error);
   }, []);
 
   /* ── fetch pickup locations ── */
   useEffect(() => {
-    fetch("http://localhost:5000/api/pickup-locations")
-      .then((r) => r.json())
-      .then((data) => setPickupLocations(data))
+    API.get("/pickup-locations")
+      .then((r) => setPickupLocations(r.data))
       .catch(() => setPickupLocations([]));
   }, []);
 
@@ -104,21 +100,14 @@ const Checkout = () => {
     setDiscountLoading(true);
 
     try {
-      const headers = { "Content-Type": "application/json" };
+      const headers = {};
       if (user?.token) headers["Authorization"] = `Bearer ${user.token}`;
 
-      const res = await fetch("http://localhost:5000/api/discounts/apply", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ code, orderAmount: totalPrice }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setDiscountError(data.message || "Invalid or expired code.");
-        return;
-      }
+      const { data } = await API.post(
+        "/discounts/apply",
+        { code, orderAmount: totalPrice },
+        { headers },
+      );
 
       const discountedAmount =
         data.discount ??
@@ -132,8 +121,10 @@ const Checkout = () => {
         value: data.value,
         savings: Math.min(discountedAmount, totalPrice),
       });
-    } catch {
-      setDiscountError("Could not apply code. Please try again.");
+    } catch (err) {
+      setDiscountError(
+        err?.response?.data?.message || "Invalid or expired code.",
+      );
     } finally {
       setDiscountLoading(false);
     }
@@ -212,13 +203,12 @@ const Checkout = () => {
         };
       });
 
-      const headers = { "Content-Type": "application/json" };
+      const headers = {};
       if (user?.token) headers["Authorization"] = `Bearer ${user.token}`;
 
-      const res = await fetch("http://localhost:5000/api/orders", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
+      await API.post(
+        "/orders",
+        {
           guestInfo: {
             name: form.name,
             phone: form.phone,
@@ -238,17 +228,18 @@ const Checkout = () => {
           paymentMethod: form.paymentMethod,
           senderInstapayNumber:
             form.paymentMethod === "instapay" ? form.instapayNumber : null,
-
           notes: form.notes || null,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Failed to place order.");
+        },
+        { headers },
+      );
 
       clearCart();
       navigate("/order-confirmed");
     } catch (err) {
-      setError(err.message || "Something went wrong. Please try again.");
+      setError(
+        err?.response?.data?.message ||
+          "Something went wrong. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
