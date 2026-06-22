@@ -320,11 +320,11 @@ const Home = () => {
             <em>Bakery.</em>
           </h1>
           <p>
-            Handcrafted cinnamon rolls.
+            Freshly Baked Cinnamon Rolls.
             <br />
-            Six sinful flavours.
+            Made to Crave.
             <br />
-            One obsession.
+            Made to Remember.
           </p>
           <div className="hero-actions">
             <Link to="/menu" className="home-cta">
