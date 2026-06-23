@@ -24,6 +24,7 @@ const Checkout = () => {
   const [regions, setRegions] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState(null);
   const [regionOpen, setRegionOpen] = useState(false);
+  const [regionSearch, setRegionSearch] = useState("");
 
   const [pickupLocations, setPickupLocations] = useState([]);
   const [selectedPickup, setSelectedPickup] = useState(null);
@@ -85,6 +86,11 @@ const Checkout = () => {
   const deliveryFee =
     form.fulfillmentType === "delivery" ? (selectedRegion?.price ?? 0) : 0;
   const finalPrice = Math.max(0, totalPrice + deliveryFee - savings);
+
+  /* ── filtered regions for the street search dropdown ── */
+  const filteredRegions = regions.filter((r) =>
+    r.name.toLowerCase().includes(regionSearch.trim().toLowerCase()),
+  );
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -349,72 +355,96 @@ const Checkout = () => {
         </div>
       </div>
 
-      {/* ── Delivery Region (collapsible) ── */}
+      {/* ── Delivery Region (searchable combobox) ── */}
       {form.fulfillmentType === "delivery" && (
         <div className="checkout-section">
           <h2>Delivery Region</h2>
-          <button
-            className={`checkout-accordion-trigger ${
-              regionOpen ? "checkout-accordion-trigger--open" : ""
-            }`}
-            onClick={() => setRegionOpen((o) => !o)}
-            type="button"
-          >
-            <span>
-              {selectedRegion ? (
-                <>
-                  {selectedRegion.name}{" "}
-                  <span className="checkout-accordion-badge">
-                    {selectedRegion.price === 0
-                      ? "Free"
-                      : `${selectedRegion.price.toLocaleString()} EGP`}
-                  </span>
-                </>
-              ) : (
-                "Select a region"
-              )}
-            </span>
-            <span className="checkout-accordion-chevron">
-              {regionOpen ? "▲" : "▼"}
-            </span>
-          </button>
 
-          {regionOpen && (
-            <div className="checkout-accordion-body">
-              {regions.length === 0 ? (
-                <p className="checkout-prefill-note">Loading regions…</p>
-              ) : (
-                <div className="checkout-region-grid">
-                  {regions.map((r) => (
-                    <label
-                      key={r._id}
-                      className={`checkout-region-option ${
-                        selectedRegion?._id === r._id
-                          ? "checkout-region-option--active"
-                          : ""
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="deliveryRegion"
-                        checked={selectedRegion?._id === r._id}
-                        onChange={() => {
-                          setSelectedRegion(r);
-                          setRegionOpen(false);
-                        }}
-                      />
-                      <span className="checkout-region-name">{r.name}</span>
-                      <span className="checkout-region-price">
-                        {r.price === 0
-                          ? "Free"
-                          : `${r.price.toLocaleString()} EGP`}
-                      </span>
-                    </label>
-                  ))}
+          <div className="checkout-region-combobox">
+            <button
+              className={`checkout-accordion-trigger ${
+                regionOpen ? "checkout-accordion-trigger--open" : ""
+              }`}
+              onClick={() => setRegionOpen((o) => !o)}
+              type="button"
+            >
+              <span className="checkout-region-trigger-text">
+                {selectedRegion ? (
+                  <>
+                    <span className="checkout-region-trigger-name">
+                      {selectedRegion.name}
+                    </span>
+                    <span className="checkout-region-trigger-desc">
+                      {selectedRegion.price === 0
+                        ? "Free delivery"
+                        : `${selectedRegion.price.toLocaleString()} EGP delivery fee`}
+                    </span>
+                  </>
+                ) : (
+                  "Select your street"
+                )}
+              </span>
+              <span className="checkout-accordion-chevron">
+                {regionOpen ? "▲" : "▼"}
+              </span>
+            </button>
+
+            {regionOpen && (
+              <div className="checkout-accordion-body">
+                <div className="checkout-region-search">
+                  <i className="ti ti-search checkout-region-search-icon" />
+                  <input
+                    type="text"
+                    className="checkout-region-search-input"
+                    placeholder="Search for your street…"
+                    value={regionSearch}
+                    onChange={(e) => setRegionSearch(e.target.value)}
+                    autoFocus
+                  />
                 </div>
-              )}
-            </div>
-          )}
+
+                {regions.length === 0 ? (
+                  <p className="checkout-prefill-note">Loading regions…</p>
+                ) : filteredRegions.length === 0 ? (
+                  <p className="checkout-prefill-note checkout-region-empty">
+                    No streets match “{regionSearch}”.
+                  </p>
+                ) : (
+                  <div className="checkout-region-grid">
+                    {filteredRegions.map((r) => (
+                      <label
+                        key={r._id}
+                        className={`checkout-region-option ${
+                          selectedRegion?._id === r._id
+                            ? "checkout-region-option--active"
+                            : ""
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="deliveryRegion"
+                          checked={selectedRegion?._id === r._id}
+                          onChange={() => {
+                            setSelectedRegion(r);
+                            setRegionOpen(false);
+                            setRegionSearch("");
+                          }}
+                        />
+                        <div className="checkout-region-option-text">
+                          <span className="checkout-region-name">{r.name}</span>
+                          <span className="checkout-region-desc">
+                            {r.price === 0
+                              ? "Free delivery"
+                              : `${r.price.toLocaleString()} EGP delivery fee`}
+                          </span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

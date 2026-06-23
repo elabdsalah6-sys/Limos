@@ -20,7 +20,7 @@ const EMPTY = {
   description: "",
   quantity: 3,
   discountPct: "",
-  eligibleCategory: "",
+  eligibleCategories: [], // pick-only: categories customers may choose from. empty = all categories
   image: "",
   available: true,
   // static-only fields
@@ -35,6 +35,12 @@ const BundleFormModal = ({ bundle, onClose, onSaved }) => {
       ...EMPTY,
       ...bundle,
       type: bundle.type ?? "pick",
+      // back-compat: older bundles may have a single `eligibleCategory` string
+      eligibleCategories: bundle.eligibleCategories?.length
+        ? bundle.eligibleCategories
+        : bundle.eligibleCategory
+          ? [bundle.eligibleCategory]
+          : [],
       fixedItems: (bundle.fixedItems ?? [])
         .map((fi) => {
           const isObj = fi.product && typeof fi.product === "object";
@@ -50,10 +56,30 @@ const BundleFormModal = ({ bundle, onClose, onSaved }) => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [catalog, setCatalog] = useState([]);
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     API.get("/products").then(({ data }) => setCatalog(data));
   }, []);
+
+  useEffect(() => {
+    API.get("/categories")
+      .then(({ data }) => setCategories(data))
+      .catch(console.error);
+  }, []);
+
+  /* ── pick box: which categories are customers allowed to choose from ── */
+  const toggleEligibleCategory = (categoryName) => {
+    setForm((f) => {
+      const isOn = f.eligibleCategories.includes(categoryName);
+      return {
+        ...f,
+        eligibleCategories: isOn
+          ? f.eligibleCategories.filter((c) => c !== categoryName)
+          : [...f.eligibleCategories, categoryName],
+      };
+    });
+  };
 
   /* ── static box: fixed item steppers ── */
   const fixedQty = (productId) =>
@@ -109,7 +135,7 @@ const BundleFormModal = ({ bundle, onClose, onSaved }) => {
               description: form.description,
               quantity: form.quantity,
               discountPct: form.discountPct,
-              eligibleCategory: form.eligibleCategory,
+              eligibleCategories: form.eligibleCategories,
               image: form.image,
               available: form.available,
             }
@@ -246,6 +272,67 @@ const BundleFormModal = ({ bundle, onClose, onSaved }) => {
                 >
                   Customer saves {form.discountPct}% off the total price of any{" "}
                   {form.quantity} items
+                </p>
+              )}
+
+              <label className="form-label" style={{ marginTop: 16 }}>
+                Allowed Categories
+              </label>
+              <p
+                style={{
+                  fontSize: 11,
+                  color: "#9a8878",
+                  margin: "0 0 8px",
+                  fontFamily: "'DM Sans',sans-serif",
+                }}
+              >
+                Choose which categories customers can pick items from. Leave all
+                unchecked to allow every product.
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {categories.length === 0 ? (
+                  <p
+                    style={{
+                      fontSize: 12,
+                      color: "#9a8878",
+                      fontFamily: "'DM Sans',sans-serif",
+                    }}
+                  >
+                    Loading categories...
+                  </p>
+                ) : (
+                  categories.map((c) => {
+                    const active = form.eligibleCategories.includes(c.name);
+                    return (
+                      <button
+                        key={c._id}
+                        type="button"
+                        onClick={() => toggleEligibleCategory(c.name)}
+                        className="admin-card-btn"
+                        style={{
+                          padding: "6px 12px",
+                          borderColor: active ? "#c4712a" : "#e0d0c0",
+                          color: active ? "#c4712a" : "#6a5040",
+                          background: active ? "#fdf0e4" : "#fff",
+                        }}
+                      >
+                        {c.name}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+              {form.eligibleCategories.length > 0 && (
+                <p
+                  style={{
+                    fontSize: 11,
+                    color: "#9a8878",
+                    marginTop: 6,
+                    fontFamily: "'DM Sans',sans-serif",
+                  }}
+                >
+                  Customers can only pick from:{" "}
+                  {form.eligibleCategories.join(", ")}
                 </p>
               )}
             </>
@@ -490,6 +577,7 @@ const BundleFormModal = ({ bundle, onClose, onSaved }) => {
 /* ═══════════════════════════════════════════════
    CUSTOMER PRODUCT PICKER MODAL (Pick Your Own only)
    — disabled entirely when the store is closed
+   — limited to bundle.eligibleCategories, if any are set
 ═══════════════════════════════════════════════ */
 const ProductPickerModal = ({ bundle, onClose, onAddToCart, isStoreOpen }) => {
   const [products, setProducts] = useState([]);
@@ -497,13 +585,25 @@ const ProductPickerModal = ({ bundle, onClose, onAddToCart, isStoreOpen }) => {
   const [selected, setSelected] = useState({});
   const max = Number(bundle.quantity);
 
+  // back-compat: older bundles may carry a single `eligibleCategory` string
+  // instead of the `eligibleCategories` array
+  const allowedCategories =
+    bundle.eligibleCategories?.length > 0
+      ? bundle.eligibleCategories
+      : bundle.eligibleCategory
+        ? [bundle.eligibleCategory]
+        : [];
+
   useEffect(() => {
-    const url = bundle.eligibleCategory
-      ? `/products?category=${bundle.eligibleCategory}`
-      : "/products";
-    API.get(url).then(({ data }) =>
-      setProducts(data.filter((p) => p.available !== false)),
-    );
+    API.get("/products").then(({ data }) => {
+      const inStock = data.filter((p) => p.available !== false);
+      const scoped =
+        allowedCategories.length > 0
+          ? inStock.filter((p) => allowedCategories.includes(p.category))
+          : inStock;
+      setProducts(scoped);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle]);
 
   const totalSelected = Object.values(selected).reduce((s, x) => s + x.qty, 0);

@@ -385,122 +385,6 @@
   color: #c4712a;
 }
 
-/* ─────────────────────────────────────────
-   PASTE THESE INTO YOUR Checkout.css
-   ───────────────────────────────────────── */
-
-/* ── Fulfillment Tabs ── */
-.checkout-fulfillment-tabs {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.checkout-fulfillment-tab {
-  flex: 1;
-  padding: 0.875rem 1rem;
-  border: 2px solid var(--border-color, #e5e7eb);
-  border-radius: 10px;
-  background: transparent;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    border-color 0.15s,
-    background 0.15s,
-    color 0.15s;
-  color: inherit;
-}
-
-.checkout-fulfillment-tab--active {
-  border-color: var(--primary, #2563eb);
-  background: var(--primary-light, #eff6ff);
-  color: var(--primary, #2563eb);
-}
-
-/* ── Collapsible Accordion ── */
-.checkout-accordion-trigger {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.875rem 1rem;
-  border: 2px solid var(--border-color, #e5e7eb);
-  border-radius: 10px;
-  background: transparent;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  text-align: left;
-  color: inherit;
-  transition: border-color 0.15s;
-}
-
-.checkout-accordion-trigger--open {
-  border-color: var(--primary, #2563eb);
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-.checkout-accordion-chevron {
-  font-size: 0.75rem;
-  opacity: 0.5;
-  flex-shrink: 0;
-  margin-left: 0.5rem;
-}
-
-.checkout-accordion-badge {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--primary, #2563eb);
-  margin-left: 0.4rem;
-}
-
-.checkout-accordion-meta {
-  font-size: 0.82rem;
-  opacity: 0.6;
-  margin-left: 0.25rem;
-}
-
-.checkout-accordion-body {
-  border: 2px solid var(--primary, #2563eb);
-  border-top: none;
-  border-bottom-left-radius: 10px;
-  border-bottom-right-radius: 10px;
-  padding: 0.75rem;
-  animation: accordionOpen 0.15s ease;
-}
-
-@keyframes accordionOpen {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ── Secondary Phone / Optional label ── */
-.checkout-field-optional {
-  font-size: 0.78rem;
-  font-weight: 400;
-  opacity: 0.55;
-}
-
-.checkout-field-hint {
-  margin: 0.35rem 0 0;
-  font-size: 0.78rem;
-  opacity: 0.6;
-}
-
-/* ── InstaPay sender field (nested inside instapay-info box) ── */
-.checkout-instapay-sender-field {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-}
-
 /* ── Fulfillment Tabs ── */
 .checkout-fulfillment-tabs {
   display: flex;
@@ -615,4 +499,98 @@
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid #e8ddd0;
+}
+
+/* ─────────────────────────────────────────
+   Delivery region: stacked name/description
+   + street search combobox
+   ───────────────────────────────────────── */
+
+.checkout-region-combobox {
+  position: relative;
+}
+
+.checkout-region-trigger-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.checkout-region-trigger-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a0f05;
+}
+
+.checkout-region-trigger-desc {
+  font-size: 12px;
+  font-weight: 500;
+  color: #c4712a;
+}
+
+.checkout-region-search {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.checkout-region-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #b0a090;
+  pointer-events: none;
+}
+
+.checkout-region-search-input {
+  width: 100%;
+  padding: 10px 12px 10px 34px;
+  border: 1.5px solid #e8ddd0;
+  border-radius: 8px;
+  background: #faf7f2;
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  color: #1a0f05;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.checkout-region-search-input:focus {
+  border-color: #c4712a;
+}
+
+.checkout-region-search-input::placeholder {
+  color: #b0a090;
+}
+
+.checkout-region-empty {
+  margin-bottom: 0;
+  justify-content: center;
+  text-align: center;
+}
+
+.checkout-region-option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.checkout-region-option .checkout-region-name {
+  flex: none;
+}
+
+.checkout-region-desc {
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #c4712a;
+}
+
+.checkout-region-grid {
+  max-height: 280px;
+  overflow-y: auto;
 }
