@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import "./MyOrders.css";
 
+// Use an environment variable in production, fall back to localhost for local dev.
+// Set REACT_APP_API_URL (Create React App) or NEXT_PUBLIC_API_URL (Next.js) on Vercel
+// to point at your deployed backend, e.g. https://your-backend.onrender.com
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 const STATUS_LABEL = {
   pending: "Pending",
   confirmed: "Confirmed",
@@ -76,11 +81,12 @@ const MyOrders = () => {
       return;
     }
     fetchOrders();
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]); // <-- fixed: only refetch when the token changes, not on every render
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/orders/mine", {
+      const res = await fetch(`${API_BASE_URL}/api/orders/mine`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch orders.");
@@ -96,13 +102,10 @@ const MyOrders = () => {
   const handleCancel = async (orderId) => {
     setCancelling(orderId);
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/orders/${orderId}/cancel`,
-        {
-          method: "PUT",
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const res = await fetch(`${API_BASE_URL}/api/orders/${orderId}/cancel`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) throw new Error("Failed to cancel order.");
       setOrders((prev) =>
         prev.map((o) =>
