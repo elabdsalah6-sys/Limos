@@ -1225,3 +1225,40 @@ select.form-input {
   background: #ed0000;
   color: #f5e6d8;
 }
+
+/* ── Pending order: highlighted + shaking for quick scanning ── */
+.admin-card--pending {
+  background: #fff3e0;
+  border: 1.5px solid #f0c896;
+  animation: pending-card-shake 4s ease-in-out infinite;
+  z-index: 100;
+}
+
+@keyframes pending-card-shake {
+  0%,
+  90%,
+  100% {
+    transform: translateX(0);
+  }
+  91% {
+    transform: translateX(-4px) rotate(-0.4deg);
+  }
+  92% {
+    transform: translateX(4px) rotate(0.4deg);
+  }
+  93% {
+    transform: translateX(-4px) rotate(-0.4deg);
+  }
+  94% {
+    transform: translateX(4px) rotate(0.4deg);
+  }
+  95% {
+    transform: translateX(-3px);
+  }
+  96% {
+    transform: translateX(3px);
+  }
+  97% {
+    transform: translateX(0);
+  }
+}

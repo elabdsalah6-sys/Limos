@@ -795,7 +795,10 @@ const OrdersTab = ({ refreshKey, onOrderUpdated }) => {
             const shortId = o._id.slice(-6).toUpperCase();
 
             return (
-              <div key={o._id} className="admin-card">
+              <div
+                key={o._id}
+                className={`admin-card${o.status === "pending" ? " admin-card--pending" : ""}`}
+              >
                 <div className="admin-card-top">
                   <div>
                     <div className="admin-card-title-row">
