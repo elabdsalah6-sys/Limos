@@ -637,6 +637,59 @@ const StatusDropdown = ({ value, onChange }) => {
   );
 };
 
+/* ─── Bundle line item (Orders tab) ───
+   Renders one purchased bundle as a single card: its name, the products
+   inside it, and the before/after price with the discount %, instead of
+   the bundle's products being flattened into the plain items list. */
+const OrderBundleLine = ({ bundle }) => {
+  const pct = bundle.discountPct || 0;
+  return (
+    <div
+      className="order-item-row order-bundle-row"
+      style={{ flexDirection: "column", alignItems: "stretch", gap: 4 }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+        }}
+      >
+        <span style={{ fontWeight: 700 }}>
+          <i className="ti ti-gift" /> {bundle.name}
+        </span>
+        <span style={{ textAlign: "right" }}>
+          {bundle.discountAmount > 0 && (
+            <span className="order-original-price" style={{ marginRight: 6 }}>
+              {fmt(bundle.originalPrice)} EGP
+            </span>
+          )}
+          <strong>{fmt(bundle.finalPrice)} EGP</strong>
+          {pct > 0 && (
+            <span style={{ marginLeft: 6, fontSize: 12, color: "#c4712a" }}>
+              ({pct}% off)
+            </span>
+          )}
+        </span>
+      </div>
+      <div style={{ paddingLeft: 18, fontSize: 13, color: "#7a6a5a" }}>
+        {bundle.items.map((bi, idx) => (
+          <div
+            key={idx}
+            style={{ display: "flex", justifyContent: "space-between" }}
+          >
+            <span>
+              {bi.productName}
+              {bi.quantity > 1 ? ` ×${bi.quantity}` : ""}
+            </span>
+            <span>{fmt(bi.price * bi.quantity)} EGP</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 /* ═══════════════════════════════════════════════
    ORDERS TAB
 ═══════════════════════════════════════════════ */
@@ -829,6 +882,48 @@ const OrdersTab = ({ refreshKey, onOrderUpdated }) => {
                         <p className="order-notes-text">{o.notes}</p>
                       </div>
                     )}
+
+                    {/* Payment method + InstaPay sender number */}
+                    <div className="order-notes-box">
+                      <span className="order-notes-label">
+                        <i className="ti ti-credit-card" /> Payment
+                      </span>
+                      <p className="order-notes-text">
+                        {o.paymentMethod === "instapay"
+                          ? "InstaPay"
+                          : o.paymentMethod === "card"
+                            ? "Card"
+                            : "Cash on Delivery"}
+                        {o.paymentMethod === "instapay" && (
+                          <>
+                            {" "}
+                            ·{" "}
+                            {o.senderInstapayNumber ? (
+                              <span>Sent from {o.senderInstapayNumber}</span>
+                            ) : (
+                              <span style={{ color: "#b02020" }}>
+                                No sender number provided
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </p>
+                    </div>
+
+                    {/* Bundles purchased on this order, shown as grouped
+                        cards (name + nested items + before/after price)
+                        instead of flattened into the plain items list. */}
+                    {o.bundles?.length > 0 && (
+                      <div
+                        className="order-items-list"
+                        style={{ marginBottom: 10 }}
+                      >
+                        {o.bundles.map((b, i) => (
+                          <OrderBundleLine key={i} bundle={b} />
+                        ))}
+                      </div>
+                    )}
+
                     <div className="order-items-list">
                       {o.items.map((item, i) => (
                         <div key={i} className="order-item-row">
@@ -840,7 +935,12 @@ const OrdersTab = ({ refreshKey, onOrderUpdated }) => {
                         </div>
                       ))}
 
-                      {/* Subtotal row */}
+                      {/* Subtotal row — plain items + bundle final prices.
+                          Bundles are rendered as their own grouped cards
+                          above, but their money still belongs in the
+                          subtotal, otherwise it silently vanishes from
+                          this row while still being included in the
+                          (separately-calculated) total paid. */}
                       <div className="order-item-row order-subtotal-row">
                         <span>Subtotal</span>
                         <span>
@@ -848,7 +948,11 @@ const OrdersTab = ({ refreshKey, onOrderUpdated }) => {
                             o.items.reduce(
                               (acc, i) => acc + i.price * i.quantity,
                               0,
-                            ),
+                            ) +
+                              (o.bundles ?? []).reduce(
+                                (acc, b) => acc + b.finalPrice,
+                                0,
+                              ),
                           )}{" "}
                           EGP
                         </span>

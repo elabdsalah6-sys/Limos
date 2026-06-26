@@ -190,24 +190,41 @@ const Checkout = () => {
     setLoading(true);
 
     try {
-      const orderItems = cart.flatMap((item) => {
-        if (item.type === "bundle") {
-          return item.items.map((i) => ({
-            product: i.product._id,
-            productName: i.product.name,
-            selectedSize: i.size?.label ?? "default",
-            price: i.unitPrice ?? i.product.sizes?.[0]?.price ?? 0,
-            quantity: i.qty,
-          }));
-        }
-        return {
+      // Plain (non-bundle) cart lines go in `orderItems` as before.
+      // Bundle lines are kept grouped in `orderBundles` instead of being
+      // flattened, so admins can see the bundle name and its before/after
+      // discount pricing, not just a pile of loose products.
+      const orderItems = cart
+        .filter((item) => item.type !== "bundle")
+        .map((item) => ({
           product: item.product._id,
           productName: item.product.name,
           selectedSize: item.size?.label ?? "default",
           price: item.unitPrice,
           quantity: item.qty,
-        };
-      });
+        }));
+
+      const orderBundles = cart
+        .filter((item) => item.type === "bundle")
+        .map((item) => {
+          const finalPrice = item.total ?? 0;
+          const discountAmount = item.discount ?? 0;
+          return {
+            bundleId: item.bundle?._id,
+            name: item.bundle?.name ?? "Bundle",
+            originalPrice: finalPrice + discountAmount,
+            discountPct: item.bundle?.discountPct ?? 0,
+            discountAmount,
+            finalPrice,
+            items: item.items.map((i) => ({
+              product: i.product._id,
+              productName: i.product.name,
+              selectedSize: i.size?.label ?? "default",
+              price: i.unitPrice ?? i.product.sizes?.[0]?.price ?? 0,
+              quantity: i.qty,
+            })),
+          };
+        });
 
       const headers = {};
       if (user?.token) headers["Authorization"] = `Bearer ${user.token}`;
@@ -221,6 +238,7 @@ const Checkout = () => {
             secondaryPhone: form.secondaryPhone || null,
           },
           items: orderItems,
+          bundles: orderBundles,
           itemsTotal: totalPrice,
           fulfillmentType: form.fulfillmentType,
           deliveryRegionId:
