@@ -275,71 +275,6 @@ const Checkout = () => {
         <h1>Checkout</h1>
       </div>
 
-      {/* ── Order Summary ── */}
-      <div className="checkout-section">
-        <h2>Order Summary</h2>
-        <div className="checkout-summary-items">
-          {cart.map((item) => (
-            <div className="checkout-summary-row" key={item.key}>
-              <span className="checkout-summary-name">
-                {item.type === "bundle" ? item.bundle.name : item.product.name}
-                {item.qty > 1 && item.type !== "bundle" && (
-                  <span className="checkout-summary-qty"> ×{item.qty}</span>
-                )}
-              </span>
-              <span className="checkout-summary-price">
-                {(item.type === "bundle"
-                  ? item.total
-                  : item.unitPrice * item.qty
-                ).toLocaleString()}{" "}
-                EGP
-              </span>
-            </div>
-          ))}
-        </div>
-
-        <div className="checkout-summary-row checkout-subtotal-row">
-          <span>Subtotal</span>
-          <span>{totalPrice.toLocaleString()} EGP</span>
-        </div>
-
-        {form.fulfillmentType === "delivery" && selectedRegion && (
-          <div className="checkout-summary-row checkout-delivery-row">
-            <span>Delivery — {selectedRegion.name}</span>
-            <span>
-              {deliveryFee === 0
-                ? "Free"
-                : `${deliveryFee.toLocaleString()} EGP`}
-            </span>
-          </div>
-        )}
-
-        {form.fulfillmentType === "pickup" && (
-          <div className="checkout-summary-row checkout-delivery-row">
-            <span>Pickup</span>
-            <span>Free</span>
-          </div>
-        )}
-
-        {appliedDiscount && (
-          <div className="checkout-summary-row checkout-discount-row">
-            <span className="checkout-discount-label">
-              Discount ({appliedDiscount.code})
-            </span>
-            <span className="checkout-discount-saving">
-              −{savings.toLocaleString()} EGP
-            </span>
-          </div>
-        )}
-
-        <div className="checkout-total-row">
-          <span>Total</span>
-          <span className="checkout-total-price">
-            {finalPrice.toLocaleString()} EGP
-          </span>
-        </div>
-      </div>
-
       {/* ── Fulfillment Type ── */}
       <div className="checkout-section">
         <h2>How do you want to receive your order?</h2>
@@ -661,6 +596,71 @@ const Checkout = () => {
               rows={2}
             />
           </div>
+        </div>
+      </div>
+
+      {/* ── Order Summary ── */}
+      <div className="checkout-section">
+        <h2>Order Summary</h2>
+        <div className="checkout-summary-items">
+          {cart.map((item) => (
+            <div className="checkout-summary-row" key={item.key}>
+              <span className="checkout-summary-name">
+                {item.type === "bundle" ? item.bundle.name : item.product.name}
+                {item.qty > 1 && item.type !== "bundle" && (
+                  <span className="checkout-summary-qty"> ×{item.qty}</span>
+                )}
+              </span>
+              <span className="checkout-summary-price">
+                {(item.type === "bundle"
+                  ? item.total
+                  : item.unitPrice * item.qty
+                ).toLocaleString()}{" "}
+                EGP
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="checkout-summary-row checkout-subtotal-row">
+          <span>Subtotal</span>
+          <span>{totalPrice.toLocaleString()} EGP</span>
+        </div>
+
+        {form.fulfillmentType === "delivery" && selectedRegion && (
+          <div className="checkout-summary-row checkout-delivery-row">
+            <span>Delivery — {selectedRegion.name}</span>
+            <span>
+              {deliveryFee === 0
+                ? "Free"
+                : `${deliveryFee.toLocaleString()} EGP`}
+            </span>
+          </div>
+        )}
+
+        {form.fulfillmentType === "pickup" && (
+          <div className="checkout-summary-row checkout-delivery-row">
+            <span>Pickup</span>
+            <span>Free</span>
+          </div>
+        )}
+
+        {appliedDiscount && (
+          <div className="checkout-summary-row checkout-discount-row">
+            <span className="checkout-discount-label">
+              Discount ({appliedDiscount.code})
+            </span>
+            <span className="checkout-discount-saving">
+              −{savings.toLocaleString()} EGP
+            </span>
+          </div>
+        )}
+
+        <div className="checkout-total-row">
+          <span>Total</span>
+          <span className="checkout-total-price">
+            {finalPrice.toLocaleString()} EGP
+          </span>
         </div>
       </div>
 
