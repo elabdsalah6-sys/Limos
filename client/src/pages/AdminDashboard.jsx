@@ -1061,11 +1061,10 @@ const TopItemsTab = ({ refreshKey }) => {
         deliveredOrders.forEach((order) => {
           // Count plain items
           (order.items || []).forEach((item) => {
-            const key = `${item.productName}__${item.selectedSize}`;
+            const key = item.productName;
             if (!map[key]) {
               map[key] = {
                 name: item.productName,
-                size: item.selectedSize,
                 quantity: 0,
                 revenue: 0,
               };
@@ -1077,11 +1076,11 @@ const TopItemsTab = ({ refreshKey }) => {
           // Count bundle items too
           (order.bundles || []).forEach((bundle) => {
             (bundle.items || []).forEach((bi) => {
-              const key = `${bi.productName}__${bi.size || ""}`;
+              const key = bi.productName;
+
               if (!map[key]) {
                 map[key] = {
                   name: bi.productName,
-                  size: bi.size || "—",
                   quantity: 0,
                   revenue: 0,
                 };
@@ -1131,7 +1130,7 @@ const TopItemsTab = ({ refreshKey }) => {
             const barPct = Math.round((item[sortBy] / maxVal) * 100);
             return (
               <div
-                key={`${item.name}__${item.size}`}
+                key={item.name}
                 className="admin-card"
                 style={{ padding: "14px 18px" }}
               >
@@ -1179,18 +1178,6 @@ const TopItemsTab = ({ refreshKey }) => {
                       }}
                     >
                       {item.name}
-                      {item.size && item.size !== "—" && (
-                        <span
-                          style={{
-                            fontSize: 13,
-                            fontWeight: 400,
-                            color: "#9a8878",
-                            marginLeft: 6,
-                          }}
-                        >
-                          ({item.size})
-                        </span>
-                      )}
                     </div>
                   </div>
 
