@@ -1262,3 +1262,23 @@ select.form-input {
     transform: translateX(0);
   }
 }
+
+/* Small clock-badge for order time, sits next to the date in card meta */
+.order-time-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #c4712a;
+  background: #fbe9d8;
+  border-radius: 999px;
+  padding: 2px 8px;
+  vertical-align: middle;
+}
+.order-time-chip i {
+  font-size: 10px;
+}

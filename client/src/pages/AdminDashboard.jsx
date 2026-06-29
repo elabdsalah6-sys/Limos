@@ -22,10 +22,15 @@ const fmtDate = (d) =>
     month: "short",
     year: "numeric",
   });
+const fmtTime = (d) =>
+  new Date(d).toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
 /* ═══════════════════════════════════════════════
-   MAIN
-═══════════════════════════════════════════════ */
+    MAIN
+  ═══════════════════════════════════════════════ */
 const AdminDashboard = () => {
   const [tab, setTab] = useState("overview");
 
@@ -467,8 +472,8 @@ const RegionsTab = ({ refreshKey }) => {
 };
 
 /* ═══════════════════════════════════════════════
-   OVERVIEW TAB
-═══════════════════════════════════════════════ */
+    OVERVIEW TAB
+  ═══════════════════════════════════════════════ */
 const OverviewTab = ({ refreshKey }) => {
   const [data, setData] = useState(null);
   const [revenue, setRevenue] = useState(null);
@@ -558,12 +563,12 @@ const OverviewTab = ({ refreshKey }) => {
 };
 
 /* ═══════════════════════════════════════════════
-   STATUS DROPDOWN
-   Custom dropdown that renders each status as its own colored pill
-   (reusing the .status-pill--* palette), with an icon, a checkmark on
-   the active item, and click-outside-to-close. Swaps in for the old
-   plain <select> on the Orders tab.
-═══════════════════════════════════════════════ */
+    STATUS DROPDOWN
+    Custom dropdown that renders each status as its own colored pill
+    (reusing the .status-pill--* palette), with an icon, a checkmark on
+    the active item, and click-outside-to-close. Swaps in for the old
+    plain <select> on the Orders tab.
+  ═══════════════════════════════════════════════ */
 const STATUS_META = {
   pending: { label: "Pending", icon: "ti-clock" },
   confirmed: { label: "Confirmed", icon: "ti-check" },
@@ -638,9 +643,9 @@ const StatusDropdown = ({ value, onChange }) => {
 };
 
 /* ─── Bundle line item (Orders tab) ───
-   Renders one purchased bundle as a single card: its name, the products
-   inside it, and the before/after price with the discount %, instead of
-   the bundle's products being flattened into the plain items list. */
+    Renders one purchased bundle as a single card: its name, the products
+    inside it, and the before/after price with the discount %, instead of
+    the bundle's products being flattened into the plain items list. */
 const OrderBundleLine = ({ bundle }) => {
   const pct = bundle.discountPct || 0;
   return (
@@ -691,8 +696,8 @@ const OrderBundleLine = ({ bundle }) => {
 };
 
 /* ═══════════════════════════════════════════════
-   ORDERS TAB
-═══════════════════════════════════════════════ */
+    ORDERS TAB
+  ═══════════════════════════════════════════════ */
 const OrdersTab = ({ refreshKey, onOrderUpdated }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -824,7 +829,6 @@ const OrdersTab = ({ refreshKey, onOrderUpdated }) => {
                           <i className="ti ti-phone" /> {customerPhone}
                         </a>
                       )}
-
                       {secondaryPhone && (
                         <a
                           href={`tel:${secondaryPhone}`}
@@ -836,8 +840,10 @@ const OrdersTab = ({ refreshKey, onOrderUpdated }) => {
                           </span>
                         </a>
                       )}
-
                       <span> · {fmtDate(o.createdAt)}</span>
+                      <span className="order-time-chip">
+                        <i className="ti ti-clock" /> {fmtTime(o.createdAt)}
+                      </span>
                     </div>
                   </div>
                   <div className="admin-card-right">
@@ -914,8 +920,8 @@ const OrdersTab = ({ refreshKey, onOrderUpdated }) => {
                     </div>
 
                     {/* Bundles purchased on this order, shown as grouped
-                        cards (name + nested items + before/after price)
-                        instead of flattened into the plain items list. */}
+                          cards (name + nested items + before/after price)
+                          instead of flattened into the plain items list. */}
                     {o.bundles?.length > 0 && (
                       <div
                         className="order-items-list"
@@ -939,11 +945,11 @@ const OrdersTab = ({ refreshKey, onOrderUpdated }) => {
                       ))}
 
                       {/* Subtotal row — plain items + bundle final prices.
-                          Bundles are rendered as their own grouped cards
-                          above, but their money still belongs in the
-                          subtotal, otherwise it silently vanishes from
-                          this row while still being included in the
-                          (separately-calculated) total paid. */}
+                            Bundles are rendered as their own grouped cards
+                            above, but their money still belongs in the
+                            subtotal, otherwise it silently vanishes from
+                            this row while still being included in the
+                            (separately-calculated) total paid. */}
                       <div className="order-item-row order-subtotal-row">
                         <span>Subtotal</span>
                         <span>
@@ -1038,8 +1044,8 @@ const OrdersTab = ({ refreshKey, onOrderUpdated }) => {
 };
 
 /* ═══════════════════════════════════════════════
-   USERS TAB
-═══════════════════════════════════════════════ */
+    USERS TAB
+  ═══════════════════════════════════════════════ */
 const UsersTab = ({ refreshKey }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1577,8 +1583,8 @@ const PickupLocationsTab = ({ refreshKey }) => {
 };
 
 /* ═══════════════════════════════════════════════
-   DISCOUNTS TAB
-═══════════════════════════════════════════════ */
+    DISCOUNTS TAB
+  ═══════════════════════════════════════════════ */
 const EMPTY_CODE_FORM = {
   code: "",
   type: "percentage",
@@ -1966,8 +1972,8 @@ const DiscountsTab = ({ refreshKey }) => {
 };
 
 /* ═══════════════════════════════════════════════
-   CATEGORIES TAB
-═══════════════════════════════════════════════ */
+    CATEGORIES TAB
+  ═══════════════════════════════════════════════ */
 const EMPTY_CAT_FORM = {
   name: "",
   description: "",
