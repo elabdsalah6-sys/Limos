@@ -543,7 +543,13 @@ const Checkout = () => {
           </div>
 
           <div className="checkout-field">
-            <label htmlFor="phone">Phone Number</label>
+            <label htmlFor="phone">
+              Phone Number{" "}
+              <span className="checkout-field-optional">
+                (Whatsapp Available)
+              </span>
+            </label>
+
             <input
               id="phone"
               name="phone"
