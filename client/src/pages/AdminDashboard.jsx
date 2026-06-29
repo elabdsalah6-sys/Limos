@@ -167,6 +167,7 @@ const AdminDashboard = () => {
           {[
             { key: "overview", label: "Overview" },
             { key: "orders", label: "Orders" },
+            { key: "top_items", label: "Top Items" },
             { key: "users", label: "Users" },
             { key: "discounts", label: "Discounts" },
             { key: "instapay", label: "InstaPay" },
@@ -193,6 +194,7 @@ const AdminDashboard = () => {
             onOrderUpdated={checkPendingOrders}
           />
         )}
+        {tab === "top_items" && <TopItemsTab refreshKey={refreshKey} />}
         {tab === "users" && <UsersTab refreshKey={refreshKey} />}
         {tab === "discounts" && <DiscountsTab refreshKey={refreshKey} />}
         {tab === "instapay" && <InstapayTab refreshKey={refreshKey} />}
@@ -1034,6 +1036,204 @@ const OrdersTab = ({ refreshKey, onOrderUpdated }) => {
                     </div>
                   </>
                 )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+};
+
+const TopItemsTab = ({ refreshKey }) => {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState("quantity"); // "quantity" | "revenue"
+
+  useEffect(() => {
+    setLoading(true);
+    API.get("/orders")
+      .then(({ data: orders }) => {
+        const map = {};
+
+        const deliveredOrders = orders.filter((o) => o.status === "delivered");
+
+        deliveredOrders.forEach((order) => {
+          // Count plain items
+          (order.items || []).forEach((item) => {
+            const key = `${item.productName}__${item.selectedSize}`;
+            if (!map[key]) {
+              map[key] = {
+                name: item.productName,
+                size: item.selectedSize,
+                quantity: 0,
+                revenue: 0,
+              };
+            }
+            map[key].quantity += item.quantity;
+            map[key].revenue += item.price * item.quantity;
+          });
+
+          // Count bundle items too
+          (order.bundles || []).forEach((bundle) => {
+            (bundle.items || []).forEach((bi) => {
+              const key = `${bi.productName}__${bi.size || ""}`;
+              if (!map[key]) {
+                map[key] = {
+                  name: bi.productName,
+                  size: bi.size || "—",
+                  quantity: 0,
+                  revenue: 0,
+                };
+              }
+              map[key].quantity += bi.quantity;
+              map[key].revenue += bi.price * bi.quantity;
+            });
+          });
+        });
+
+        setItems(Object.values(map));
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [refreshKey]);
+
+  const sorted = [...items].sort((a, b) => b[sortBy] - a[sortBy]);
+  const maxVal = sorted[0]?.[sortBy] ?? 1;
+
+  return (
+    <>
+      <div className="admin-toolbar">
+        <div className="admin-toolbar-title">Top Selling Items</div>
+        <div className="admin-toolbar-right">
+          <select
+            className="admin-search"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            style={{ cursor: "pointer" }}
+          >
+            <option value="quantity">Sort by Units Sold</option>
+            <option value="revenue">Sort by Revenue</option>
+          </select>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="admin-loading">Loading…</div>
+      ) : sorted.length === 0 ? (
+        <div className="admin-empty">
+          <h3>No delivered orders yet</h3>
+          <p>Top items will appear once orders are delivered.</p>
+        </div>
+      ) : (
+        <div className="admin-list">
+          {sorted.map((item, idx) => {
+            const barPct = Math.round((item[sortBy] / maxVal) * 100);
+            return (
+              <div
+                key={`${item.name}__${item.size}`}
+                className="admin-card"
+                style={{ padding: "14px 18px" }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    marginBottom: 8,
+                  }}
+                >
+                  {/* Rank badge */}
+                  <div
+                    style={{
+                      minWidth: 32,
+                      height: 32,
+                      borderRadius: "50%",
+                      background:
+                        idx === 0
+                          ? "#c4712a"
+                          : idx === 1
+                            ? "#9a8878"
+                            : idx === 2
+                              ? "#b07840"
+                              : "#e8ddd4",
+                      color: idx < 3 ? "#fff" : "#5a4030",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontFamily: "'Cormorant Garamond', serif",
+                      fontWeight: 700,
+                      fontSize: 15,
+                    }}
+                  >
+                    {idx + 1}
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontFamily: "'Cormorant Garamond', serif",
+                        fontSize: 17,
+                        fontWeight: 700,
+                        color: "#1a0f05",
+                      }}
+                    >
+                      {item.name}
+                      {item.size && item.size !== "—" && (
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 400,
+                            color: "#9a8878",
+                            marginLeft: 6,
+                          }}
+                        >
+                          ({item.size})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <div
+                      style={{
+                        fontFamily: "'Cormorant Garamond', serif",
+                        fontSize: 20,
+                        fontWeight: 700,
+                        color: "#1a0f05",
+                      }}
+                    >
+                      {sortBy === "revenue"
+                        ? `${fmt(item.revenue)} EGP`
+                        : `×${item.quantity}`}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#9a8878" }}>
+                      {sortBy === "revenue"
+                        ? `${item.quantity} units`
+                        : `${fmt(item.revenue)} EGP`}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div
+                  style={{
+                    height: 4,
+                    background: "#f0e8e0",
+                    borderRadius: 2,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${barPct}%`,
+                      background: idx === 0 ? "#c4712a" : "#b8a898",
+                      borderRadius: 2,
+                      transition: "width 0.4s ease",
+                    }}
+                  />
+                </div>
               </div>
             );
           })}
