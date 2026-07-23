@@ -404,3 +404,11 @@ body.drawer-open-lock {
 .store-toggle-btn.store-closed {
   color: #ef4444;
 }
+
+.navbar-cart--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.navbar-cart--disabled:hover {
+  color: #1a0f05;
+}

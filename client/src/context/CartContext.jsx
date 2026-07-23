@@ -22,7 +22,7 @@ export const CartProvider = ({ children }) => {
       const existing = prev.find((i) => i.key === key);
       if (existing) {
         return prev.map((i) =>
-          i.key === key ? { ...i, qty: i.qty + qty } : i
+          i.key === key ? { ...i, qty: i.qty + qty } : i,
         );
       }
       return [
@@ -68,10 +68,27 @@ export const CartProvider = ({ children }) => {
     if (i.type === "bundle") return s + i.total;
     return s + i.unitPrice * i.qty;
   }, 0);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const openCart = () => setIsCartOpen(true);
+  const closeCart = () => setIsCartOpen(false);
+  const toggleCart = () => setIsCartOpen((prev) => !prev);
 
   return (
     <CartContext.Provider
-      value={{ cart, addItem, addBundle, removeItem, updateQty, clearCart, totalItems, totalPrice }}
+      value={{
+        cart,
+        addItem,
+        addBundle,
+        removeItem,
+        updateQty,
+        clearCart,
+        totalItems,
+        totalPrice,
+        isCartOpen,
+        openCart,
+        closeCart,
+        toggleCart,
+      }}
     >
       {children}
     </CartContext.Provider>

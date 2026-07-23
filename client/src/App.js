@@ -12,7 +12,6 @@ import NotificationBanner from "./component/NotificationBanner";
 import Home from "./pages/Home";
 import Menu from "./pages/Menu";
 import ProductDetails from "./pages/ProductDetails";
-import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -21,6 +20,7 @@ import OrderConfirmed from "./pages/OrderConfirmed";
 import MyOrders from "./pages/MyOrders";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
+import CartDrawer from "./component/CartDrawer";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -49,14 +49,6 @@ const AnimatedRoutes = () => {
           element={
             <PageTransition>
               <ProductDetails />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/cart"
-          element={
-            <PageTransition>
-              <Cart />
             </PageTransition>
           }
         />
@@ -140,6 +132,7 @@ const Layout = () => {
   return (
     <>
       <Navbar />
+      <CartDrawer />
       <NotificationBanner />
       <AnimatedRoutes />
       {!hideFooter && <Footer />}

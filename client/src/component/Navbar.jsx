@@ -11,7 +11,12 @@ import { useNotification } from "../context/NotificationContext";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
-  const { totalItems } = useCart();
+  const { totalItems, toggleCart } = useCart();
+
+  const handleCartClick = () => {
+    if (!isOpen) return;
+    toggleCart();
+  };
   const { isOpen, setIsOpen } = useStore();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -68,7 +73,10 @@ const Navbar = () => {
 
     fetchPending();
 
-    const socket = io(process.env.REACT_APP_API_URL?.replace("/api", "") || "http://localhost:5000");
+    const socket = io(
+      process.env.REACT_APP_API_URL?.replace("/api", "") ||
+        "http://localhost:5000",
+    );
 
     socket.on("new_order", () => {
       fetchPending();
@@ -212,12 +220,17 @@ const Navbar = () => {
               )}
             </Link>
           ) : (
-            <Link to="/cart" className="navbar-cart">
+            <button
+              className={`navbar-cart ${!isOpen ? "navbar-cart--disabled" : ""}`}
+              onClick={handleCartClick}
+              aria-label="Toggle cart"
+              disabled={!isOpen}
+            >
               <i className="ti ti-shopping-cart" />
               {totalItems > 0 && (
                 <span className="cart-nav-badge">{totalItems}</span>
               )}
-            </Link>
+            </button>
           )}
 
           {/* ── Hamburger toggles to X when drawer is open ── */}
@@ -405,7 +418,15 @@ const Navbar = () => {
               <Link to="/my-orders" className="drawer-link" onClick={close}>
                 <i className="ti ti-receipt" /> My Orders
               </Link>
-              <Link to="/cart" className="drawer-link" onClick={close}>
+              <button
+                className="drawer-link"
+                onClick={() => {
+                  if (!isOpen) return;
+                  close();
+                  toggleCart();
+                }}
+                disabled={!isOpen}
+              >
                 <i className="ti ti-shopping-cart" /> Cart
                 {totalItems > 0 && (
                   <span
@@ -415,7 +436,7 @@ const Navbar = () => {
                     {totalItems}
                   </span>
                 )}
-              </Link>
+              </button>
               <button className="drawer-link logout" onClick={handleLogout}>
                 <i className="ti ti-logout" /> Logout
               </button>
