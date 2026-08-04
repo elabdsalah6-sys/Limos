@@ -993,6 +993,7 @@ const BundleCard = ({
   isStoreOpen,
   onEdit,
   onDelete,
+  onToggleAvailable,
   onPick,
   onAddFixed,
 }) => {
@@ -1006,6 +1007,16 @@ const BundleCard = ({
         <div className="admin-card-controls">
           <button className="admin-card-btn" onClick={onEdit}>
             Edit
+          </button>
+          <button
+            className={`admin-card-btn admin-card-btn--stock${!isAvail ? " unavailable" : ""}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleAvailable();
+            }}
+          >
+            {isAvail ? "Sold Out" : "In Stock"}
           </button>
           <button
             className="admin-card-btn admin-card-btn--delete"
@@ -1173,6 +1184,63 @@ const BundleSection = ({ onAddToCart, isStoreOpen = true }) => {
     setBundles((bs) => bs.filter((b) => b._id !== id));
   };
 
+  const handleToggleAvailable = async (bundle) => {
+    const newAvailable = !(bundle.available !== false);
+
+    // optimistic UI update
+    setBundles((bs) =>
+      bs.map((b) =>
+        b._id === bundle._id ? { ...b, available: newAvailable } : b,
+      ),
+    );
+
+    try {
+      const payload =
+        bundle.type === "static"
+          ? {
+              type: "static",
+              name: bundle.name,
+              description: bundle.description,
+              image: bundle.image,
+              available: newAvailable,
+              originalPrice: bundle.originalPrice,
+              discountPct: bundle.discountPct,
+              offerPrice: bundle.offerPrice,
+              quantity: (bundle.fixedItems ?? []).reduce(
+                (s, fi) => s + fi.qty,
+                0,
+              ),
+              fixedItems: (bundle.fixedItems ?? []).map((fi) => ({
+                product:
+                  fi.product && typeof fi.product === "object"
+                    ? fi.product._id
+                    : fi.product,
+                qty: fi.qty,
+              })),
+            }
+          : {
+              type: "pick",
+              name: bundle.name,
+              description: bundle.description,
+              quantity: bundle.quantity,
+              discountPct: bundle.discountPct,
+              eligibleCategories: bundle.eligibleCategories ?? [],
+              image: bundle.image,
+              available: newAvailable,
+            };
+
+      await API.put(`/bundles/${bundle._id}`, payload);
+    } catch (err) {
+      // revert on failure
+      setBundles((bs) =>
+        bs.map((b) =>
+          b._id === bundle._id ? { ...b, available: bundle.available } : b,
+        ),
+      );
+      alert("Failed to update availability");
+    }
+  };
+
   /* ── add a fixed/static box straight to cart, no picker modal ── */
   const handleAddFixed = (bundle) => {
     if (!isStoreOpen) return;
@@ -1266,6 +1334,7 @@ const BundleSection = ({ onAddToCart, isStoreOpen = true }) => {
               setFormOpen(true);
             }}
             onDelete={() => handleDelete(b._id)}
+            onToggleAvailable={() => handleToggleAvailable(b)}
             onPick={() => setPickBundle(b)}
             onAddFixed={() => handleAddFixed(b)}
           />
