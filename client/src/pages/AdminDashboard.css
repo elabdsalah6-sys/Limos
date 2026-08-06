@@ -1282,3 +1282,393 @@ select.form-input {
 .order-time-chip i {
   font-size: 10px;
 }
+
+/* ═══════════════════════════════════════════════
+   CASHIER TAB
+═══════════════════════════════════════════════ */
+.cashier-layout {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.cashier-products {
+  flex: 2 1 400px;
+}
+
+.cashier-product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+@media (min-width: 640px) {
+  .cashier-product-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (min-width: 900px) {
+  .cashier-product-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.cashier-cart-col {
+  flex: 1 1 300px;
+  position: sticky;
+  top: 20px;
+}
+
+/* Product card in the picker list */
+.cashier-product-card {
+  padding: 14px 16px;
+}
+
+.cashier-product-name {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a0f05;
+  margin-bottom: 8px;
+}
+
+.cashier-size-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Size buttons — reuse btn-ghost look but tighter, and give a pressed
+   affordance since these get tapped repeatedly during a sale */
+.cashier-size-btn {
+  background: transparent;
+  color: #8a7060;
+  border: 1.5px solid #d8d0c4;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.cashier-size-btn:hover {
+  background: #1a0f05;
+  border-color: #1a0f05;
+  color: #f5f0e8;
+}
+.cashier-size-btn:active {
+  transform: scale(0.96);
+}
+
+/* Cart panel */
+.cashier-cart-card {
+  padding: 18px 20px;
+}
+
+.cashier-cart-empty {
+  color: #9a8878;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  padding: 8px 0;
+}
+
+.cashier-cart-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5ddd2;
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  color: #5a4030;
+}
+.cashier-cart-line:last-of-type {
+  border-bottom: none;
+}
+
+.cashier-cart-line-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Small qty / price inputs inside cart lines — distinct from the full
+   .form-input so they don't take up the whole row width */
+.cashier-cart-input {
+  border: 1.5px solid #ddd4c8;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  color: #1a0f05;
+  background: #faf7f2;
+  outline: none;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+.cashier-cart-input:focus {
+  border-color: #c4712a;
+  box-shadow: 0 0 0 3px rgba(196, 113, 42, 0.08);
+}
+.cashier-cart-input--qty {
+  width: 42px;
+}
+.cashier-cart-input--price {
+  width: 68px;
+}
+
+/* Flag when a line's price has been adjusted away from catalog price,
+   so it's visually obvious at a glance during a shift */
+.cashier-cart-input--price.adjusted {
+  border-color: #c4712a;
+  background: #fff8f0;
+  color: #a85e22;
+  font-weight: 700;
+}
+
+.cashier-cart-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-top: 1.5px solid #e8ddd0;
+  margin-top: 10px;
+  padding-top: 12px;
+}
+.cashier-cart-total-label {
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #9a8878;
+}
+.cashier-cart-total-value {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a0f05;
+}
+
+.cashier-confirm-btn {
+  width: 100%;
+  margin-top: 16px;
+}
+
+@media (max-width: 480px) {
+  .cashier-cart-col {
+    position: static;
+  }
+}
+
+.cashier-product-card {
+  padding: 14px 16px;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cashier-size-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cashier-size-btn {
+  width: 100%;
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════
+   CASHIER — BUNDLES
+═══════════════════════════════════════════════ */
+.cashier-section-label {
+  font-family: "DM Sans", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #9a8878;
+  margin: 20px 0 10px;
+}
+.cashier-section-label:first-child {
+  margin-top: 0;
+}
+
+.cashier-bundle-card {
+  padding: 14px 16px;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cashier-bundle-name {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a0f05;
+}
+.cashier-bundle-meta {
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  color: #9a8878;
+}
+.cashier-bundle-btn {
+  background: #1a0f05;
+  color: #f5f0e8;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.cashier-bundle-btn:hover {
+  background: #c4712a;
+}
+
+/* Bundle line inside the cart — visually distinct from plain item lines */
+.cashier-cart-bundle-line {
+  border: 1px solid #e8ddd0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  background: #f8f4ee;
+}
+.cashier-cart-bundle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a0f05;
+  margin-bottom: 4px;
+}
+.cashier-cart-bundle-items {
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  color: #9a8878;
+  margin-bottom: 6px;
+}
+.cashier-cart-bundle-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Picker modal item row (inside the shared .modal-body) */
+.cashier-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee2d4;
+}
+.cashier-picker-row:last-child {
+  border-bottom: none;
+}
+.cashier-picker-name {
+  flex: 1;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  color: #1a0f05;
+}
+.cashier-picker-step-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid #ddd4c8;
+  background: #fff;
+  color: #c4712a;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+}
+.cashier-picker-step-btn:disabled {
+  color: #c0b0a0;
+  cursor: not-allowed;
+}
+.cashier-picker-qty {
+  min-width: 18px;
+  text-align: center;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a0f05;
+}
+/* ═══════════════════════════════════════════════
+   CASHIER — PRICE ADD-ONS
+═══════════════════════════════════════════════ */
+.cashier-addon-row {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.cashier-addon-btn {
+  background: #f5f0e8;
+  border: 1.5px solid #ddd4c8;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: #8a7060;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.cashier-addon-btn:hover {
+  background: #1a0f05;
+  border-color: #1a0f05;
+  color: #f5f0e8;
+}
+.cashier-addon-btn--minus:hover {
+  background: #a02820;
+  border-color: #a02820;
+}
+.cashier-addon-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.cashier-addon-toggle-btn {
+  background: #f5f0e8;
+  border: 1.5px solid #ddd4c8;
+  border-radius: 999px;
+  padding: 4px 11px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #8a7060;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.cashier-addon-toggle-btn.active {
+  background: #c4712a;
+  border-color: #c4712a;
+  color: #fff;
+}
+.cashier-addon-toggle-btn:hover:not(.active) {
+  border-color: #c4712a;
+  color: #c4712a;
+}
+
+.cashier-addon-label {
+  font-family: "DM Sans", sans-serif;
+  font-size: 10px;
+  color: #b0a090;
+}

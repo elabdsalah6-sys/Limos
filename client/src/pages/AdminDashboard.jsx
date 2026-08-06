@@ -28,6 +28,30 @@ const fmtTime = (d) =>
     minute: "2-digit",
   });
 
+const ADDON_TIERS = [
+  { amount: 5, label: "Nutella / Caramel", names: ["nutella", "caramel"] },
+  {
+    amount: 10,
+    label:
+      "Oreo / Lotus / Blueberry / Strawberry / Ferrero / Raffaello / Kinder",
+    names: [
+      "oreo",
+      "lotus",
+      "blueberry",
+      "strawberry",
+      "ferrero",
+      "raffaello",
+      "kinder",
+    ],
+  },
+  { amount: 15, label: "Pistachio", names: ["pistachio"] },
+];
+
+const getAddon = (productName) => {
+  const lower = (productName || "").toLowerCase();
+  return ADDON_TIERS.find((tier) => tier.names.some((n) => lower.includes(n)));
+};
+
 /* ═══════════════════════════════════════════════
     MAIN
   ═══════════════════════════════════════════════ */
@@ -166,6 +190,7 @@ const AdminDashboard = () => {
         <div className="admin-tabs">
           {[
             { key: "overview", label: "Overview" },
+            { key: "cashier", label: "Cashier" },
             { key: "orders", label: "Orders" },
             { key: "top_items", label: "Top Items" },
             { key: "users", label: "Users" },
@@ -188,6 +213,7 @@ const AdminDashboard = () => {
 
       <div className="admin-section">
         {tab === "overview" && <OverviewTab refreshKey={refreshKey} />}
+        {tab === "cashier" && <CashierTab />}
         {tab === "orders" && (
           <OrdersTab
             refreshKey={refreshKey}
@@ -694,6 +720,566 @@ const OrderBundleLine = ({ bundle }) => {
         ))}
       </div>
     </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════
+    CASHIER — BUNDLE PICKER MODAL
+    Used for "pick" type bundles — cashier selects products
+    up to bundle.quantity, then it's added as one bundle line.
+  ═══════════════════════════════════════════════ */
+const getDefaultSize = (p) => {
+  const s = p.sizes?.find((s) => s.offerActive) ?? p.sizes?.[0];
+  return s ?? { label: "Regular", price: 0 };
+};
+
+const CashierBundlePicker = ({ bundle, products, onClose, onConfirm }) => {
+  const [selected, setSelected] = useState({}); // { productId: { product, size, qty } }
+  const max = Number(bundle.quantity);
+
+  const allowedCategories =
+    bundle.eligibleCategories?.length > 0 ? bundle.eligibleCategories : [];
+  const scoped = allowedCategories.length
+    ? products.filter((p) => allowedCategories.includes(p.category))
+    : products;
+
+  const totalSelected = Object.values(selected).reduce((s, x) => s + x.qty, 0);
+
+  const addOne = (p) => {
+    if (totalSelected >= max) return;
+    const size = getDefaultSize(p);
+    setSelected((prev) => ({
+      ...prev,
+      [p._id]: { product: p, size, qty: (prev[p._id]?.qty ?? 0) + 1 },
+    }));
+  };
+
+  const removeOne = (p) => {
+    setSelected((prev) => {
+      const current = prev[p._id]?.qty ?? 0;
+      if (current <= 1) {
+        const next = { ...prev };
+        delete next[p._id];
+        return next;
+      }
+      return { ...prev, [p._id]: { ...prev[p._id], qty: current - 1 } };
+    });
+  };
+
+  const subtotal = Object.values(selected).reduce(
+    (s, { size, qty }) => s + (size?.price ?? 0) * qty,
+    0,
+  );
+  const discountAmount = Math.round((subtotal * bundle.discountPct) / 100);
+  const finalPrice = subtotal - discountAmount;
+  const done = totalSelected === max;
+
+  const handleConfirmClick = () => {
+    const items = Object.values(selected).map(({ product, size, qty }) => ({
+      product: product._id,
+      productName: product.name,
+      selectedSize: size.label,
+      price: size.price,
+      quantity: qty,
+    }));
+    onConfirm({
+      bundleId: bundle._id,
+      name: bundle.name,
+      originalPrice: subtotal,
+      discountPct: bundle.discountPct,
+      discountAmount,
+      finalPrice,
+      items,
+    });
+    onClose();
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>{bundle.name}</h2>
+          <button className="modal-close" onClick={onClose}>
+            &#x2715;
+          </button>
+        </div>
+        <div className="modal-body">
+          <p style={{ fontSize: 12, color: "#9a8878", marginBottom: 10 }}>
+            Pick {max} item{max !== 1 ? "s" : ""} — {totalSelected}/{max}{" "}
+            selected
+          </p>
+          {scoped.map((p) => {
+            const qty = selected[p._id]?.qty ?? 0;
+            return (
+              <div key={p._id} className="cashier-picker-row">
+                <span className="cashier-picker-name">{p.name}</span>
+                <button
+                  className="cashier-picker-step-btn"
+                  onClick={() => removeOne(p)}
+                  disabled={qty === 0}
+                >
+                  −
+                </button>
+                <span className="cashier-picker-qty">{qty}</span>
+                <button
+                  className="cashier-picker-step-btn"
+                  onClick={() => addOne(p)}
+                  disabled={totalSelected >= max}
+                >
+                  +
+                </button>
+              </div>
+            );
+          })}
+        </div>
+        <div className="modal-footer">
+          <button className="btn-ghost" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            className="btn-primary"
+            disabled={!done}
+            onClick={handleConfirmClick}
+          >
+            {done
+              ? `Add — ${fmt(finalPrice)} EGP`
+              : `Select ${max - totalSelected} more`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════
+    CASHIER TAB
+  ═══════════════════════════════════════════════ */
+const CashierTab = () => {
+  const [products, setProducts] = useState([]);
+  const [bundles, setBundles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [cart, setCart] = useState([]); // plain items
+  const [bundleCart, setBundleCart] = useState([]); // bundle lines
+  const [pickerBundle, setPickerBundle] = useState(null);
+  const [customerName, setCustomerName] = useState("");
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const PRICE_ADDONS = [5, 10, 15];
+
+  useEffect(() => {
+    Promise.all([API.get("/products"), API.get("/bundles")])
+      .then(([pRes, bRes]) => {
+        setProducts(pRes.data);
+        setBundles(bRes.data.filter((b) => b.available !== false));
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const addToCart = (product, size) => {
+    setCart((prev) => {
+      const key = `${product._id}-${size.label}`;
+      const existing = prev.find(
+        (l) => `${l.product}-${l.selectedSize}` === key,
+      );
+      if (existing) {
+        return prev.map((l) =>
+          `${l.product}-${l.selectedSize}` === key
+            ? { ...l, quantity: l.quantity + 1 }
+            : l,
+        );
+      }
+      return [
+        ...prev,
+        {
+          product: product._id,
+          productName: product.name,
+          selectedSize: size.label,
+          price: size.price,
+          quantity: 1,
+        },
+      ];
+    });
+  };
+
+  const updateLine = (idx, field, value) => {
+    setCart((prev) =>
+      prev.map((l, i) => (i === idx ? { ...l, [field]: value } : l)),
+    );
+  };
+  const removeLine = (idx) => {
+    setCart((prev) => prev.filter((_, i) => i !== idx));
+  };
+  const toggleLineAddon = (idx) => {
+    setCart((prev) =>
+      prev.map((l, i) => {
+        if (i !== idx) return l;
+        const addon = getAddon(l.productName);
+        if (!addon) return l;
+        const applied = l.addonApplied;
+        const base = Number(l.price) || 0;
+        return {
+          ...l,
+          price: applied ? base - addon.amount : base + addon.amount,
+          addonApplied: !applied,
+        };
+      }),
+    );
+  };
+
+  /* ── static bundle: adds directly, price editable after ── */
+  const addStaticBundle = (bundle) => {
+    const items = (bundle.fixedItems ?? []).map((fi) => {
+      const size = getDefaultSize(fi.product);
+      return {
+        product: fi.product._id,
+        productName: fi.product.name,
+        selectedSize: size.label,
+        price: size.price,
+        quantity: fi.qty,
+      };
+    });
+    setBundleCart((prev) => [
+      ...prev,
+      {
+        bundleId: bundle._id,
+        name: bundle.name,
+        originalPrice: Number(bundle.originalPrice),
+        discountPct: Number(bundle.discountPct),
+        discountAmount:
+          Number(bundle.originalPrice) - Number(bundle.offerPrice),
+        finalPrice: Number(bundle.offerPrice),
+        items,
+      },
+    ]);
+  };
+
+  const addPickedBundle = (bundleLine) => {
+    setBundleCart((prev) => [...prev, bundleLine]);
+  };
+
+  const updateBundlePrice = (idx, value) => {
+    setBundleCart((prev) =>
+      prev.map((b, i) => (i === idx ? { ...b, finalPrice: value } : b)),
+    );
+  };
+  const removeBundleLine = (idx) => {
+    setBundleCart((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const adjustBundlePrice = (idx, amount) => {
+    setBundleCart((prev) =>
+      prev.map((b, i) =>
+        i === idx
+          ? {
+              ...b,
+              finalPrice: Math.max(0, (Number(b.finalPrice) || 0) + amount),
+            }
+          : b,
+      ),
+    );
+  };
+
+  const itemsTotal = cart.reduce(
+    (acc, l) => acc + (Number(l.price) || 0) * l.quantity,
+    0,
+  );
+  const bundlesTotal = bundleCart.reduce(
+    (acc, b) => acc + (Number(b.finalPrice) || 0),
+    0,
+  );
+  const total = itemsTotal + bundlesTotal;
+
+  const handleConfirm = async () => {
+    if (cart.length === 0 && bundleCart.length === 0)
+      return alert("Cart is empty.");
+    for (const l of cart) {
+      if (l.price === "" || Number(l.price) < 0 || l.quantity < 1) {
+        return alert("Check item prices and quantities.");
+      }
+    }
+    for (const b of bundleCart) {
+      if (b.finalPrice === "" || Number(b.finalPrice) < 0) {
+        return alert("Check bundle prices.");
+      }
+    }
+    setSubmitting(true);
+    try {
+      await API.post("/orders/pos", {
+        items: cart.map((l) => ({ ...l, price: Number(l.price) })),
+        bundles: bundleCart.map((b) => ({
+          ...b,
+          finalPrice: Number(b.finalPrice),
+        })),
+        customerName,
+        notes,
+      });
+      setCart([]);
+      setBundleCart([]);
+      setCustomerName("");
+      setNotes("");
+      alert("Sale confirmed.");
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to confirm sale.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const visibleProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  if (loading) return <div className="admin-loading">Loading…</div>;
+
+  return (
+    <>
+      <div className="admin-toolbar">
+        <div className="admin-toolbar-title">Cashier</div>
+        <div className="admin-toolbar-right">
+          <input
+            className="admin-search"
+            placeholder="Search products…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="cashier-layout">
+        <div className="cashier-products">
+          {bundles.length > 0 && (
+            <>
+              <div className="cashier-section-label">Bundles</div>
+              <div
+                className="cashier-product-grid"
+                style={{ marginBottom: 20 }}
+              >
+                {bundles.map((b) => {
+                  const isStatic = b.type === "static";
+                  return (
+                    <div key={b._id} className="admin-card cashier-bundle-card">
+                      <div className="cashier-bundle-name">{b.name}</div>
+                      <div className="cashier-bundle-meta">
+                        {isStatic
+                          ? `${fmt(b.offerPrice)} EGP (was ${fmt(b.originalPrice)})`
+                          : `Pick ${b.quantity} · ${b.discountPct}% off`}
+                      </div>
+                      <button
+                        className="cashier-bundle-btn"
+                        onClick={() =>
+                          isStatic ? addStaticBundle(b) : setPickerBundle(b)
+                        }
+                      >
+                        {isStatic ? "Add Box" : "Build Box"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          <div className="cashier-section-label">Products</div>
+          {visibleProducts.length === 0 ? (
+            <div className="admin-empty">
+              <h3>No products found</h3>
+              <p>Try a different search.</p>
+            </div>
+          ) : (
+            <div className="cashier-product-grid">
+              {visibleProducts.map((p) => (
+                <div key={p._id} className="admin-card cashier-product-card">
+                  <div className="cashier-product-name">{p.name}</div>
+                  <div className="cashier-size-row">
+                    {p.sizes.map((s) => (
+                      <button
+                        key={s.label}
+                        className="cashier-size-btn"
+                        onClick={() => addToCart(p, s)}
+                      >
+                        {s.label} — {fmt(s.price)} EGP
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="cashier-cart-col">
+          <div className="admin-card cashier-cart-card">
+            <label className="form-label">Customer name (optional)</label>
+            <input
+              className="form-input"
+              placeholder="Walk-in customer"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+            />
+
+            <div style={{ marginTop: 14 }}>
+              {cart.length === 0 && bundleCart.length === 0 ? (
+                <p className="cashier-cart-empty">Cart is empty.</p>
+              ) : (
+                <>
+                  {bundleCart.map((b, idx) => (
+                    <div
+                      key={`bundle-${idx}`}
+                      className="cashier-cart-bundle-line"
+                    >
+                      <div className="cashier-cart-bundle-header">
+                        <span>🎁 {b.name}</span>
+                        <button
+                          className="icon-btn icon-btn--danger"
+                          onClick={() => removeBundleLine(idx)}
+                        >
+                          <i className="ti ti-trash" />
+                        </button>
+                      </div>
+                      <div className="cashier-cart-bundle-items">
+                        {b.items
+                          .map((i) => `${i.productName} ×${i.quantity}`)
+                          .join(", ")}
+                      </div>
+                      <div className="cashier-cart-bundle-price-row">
+                        <span style={{ fontSize: 11, color: "#9a8878" }}>
+                          Price
+                        </span>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={b.finalPrice}
+                          onFocus={(e) => e.target.select()}
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            if (/^\d*\.?\d*$/.test(raw)) {
+                              updateBundlePrice(idx, raw);
+                            }
+                          }}
+                          className="cashier-cart-input cashier-cart-input--price"
+                        />
+                      </div>
+                      <div className="cashier-addon-row">
+                        {PRICE_ADDONS.map((amt) => (
+                          <button
+                            key={`plus-${amt}`}
+                            className="cashier-addon-btn"
+                            onClick={() => adjustBundlePrice(idx, amt)}
+                          >
+                            +{amt}
+                          </button>
+                        ))}
+                        {PRICE_ADDONS.map((amt) => (
+                          <button
+                            key={`minus-${amt}`}
+                            className="cashier-addon-btn cashier-addon-btn--minus"
+                            onClick={() => adjustBundlePrice(idx, -amt)}
+                          >
+                            −{amt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+
+                  {cart.map((l, idx) => (
+                    <div key={idx} className="cashier-cart-line-group">
+                      <div className="cashier-cart-line">
+                        <span className="cashier-cart-line-name">
+                          {l.productName} ({l.selectedSize})
+                        </span>
+                        <input
+                          type="number"
+                          min="1"
+                          value={l.quantity}
+                          onFocus={(e) => e.target.select()}
+                          onChange={(e) =>
+                            updateLine(idx, "quantity", Number(e.target.value))
+                          }
+                          className="cashier-cart-input cashier-cart-input--qty"
+                        />
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={l.price}
+                          onFocus={(e) => e.target.select()}
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            if (/^\d*\.?\d*$/.test(raw)) {
+                              updateLine(idx, "price", raw);
+                            }
+                          }}
+                          className="cashier-cart-input cashier-cart-input--price"
+                        />
+                        <button
+                          className="icon-btn icon-btn--danger"
+                          onClick={() => removeLine(idx)}
+                        >
+                          <i className="ti ti-trash" />
+                        </button>
+                      </div>
+                      {(() => {
+                        const addon = getAddon(l.productName);
+                        if (!addon) return null;
+                        return (
+                          <div className="cashier-addon-toggle">
+                            <button
+                              className={`cashier-addon-toggle-btn${l.addonApplied ? " active" : ""}`}
+                              onClick={() => toggleLineAddon(idx)}
+                            >
+                              {l.addonApplied ? "− Remove" : "+"} {addon.amount}{" "}
+                              EGP
+                            </button>
+                            <span className="cashier-addon-label">
+                              {addon.label}
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+
+            <div className="cashier-cart-total">
+              <span className="cashier-cart-total-label">Total</span>
+              <span className="cashier-cart-total-value">{fmt(total)} EGP</span>
+            </div>
+
+            <label className="form-label" style={{ marginTop: 10 }}>
+              Notes
+            </label>
+            <input
+              className="form-input"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+
+            <button
+              className="btn-primary cashier-confirm-btn"
+              onClick={handleConfirm}
+              disabled={
+                submitting || (cart.length === 0 && bundleCart.length === 0)
+              }
+            >
+              {submitting ? "Confirming…" : "Confirm Sale"}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {pickerBundle && (
+        <CashierBundlePicker
+          bundle={pickerBundle}
+          products={products}
+          onClose={() => setPickerBundle(null)}
+          onConfirm={addPickedBundle}
+        />
+      )}
+    </>
   );
 };
 
