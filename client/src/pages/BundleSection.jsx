@@ -11,14 +11,14 @@ const getPrice = (p) => {
   return s?.price ?? 0;
 };
 
-/* ═══════════════════════════════════════════════
-   ADMIN FORM MODAL (unchanged — admin can always manage bundles)
-═══════════════════════════════════════════════ */
+const getAddOn = (p) => Number(p?.bundleAddOn) || 0;
+
 const EMPTY = {
   type: "pick", // "pick" = customer chooses items | "static" = admin-fixed box
   name: "",
   description: "",
   quantity: 3,
+  basePrice: "", // pick-only: flat base price for the bundle, before add-ons/discount
   discountPct: "",
   eligibleCategories: [], // pick-only: categories customers may choose from. empty = all categories
   image: "",
@@ -101,9 +101,23 @@ const BundleFormModal = ({ bundle, onClose, onSaved }) => {
   const totalFixedItems = form.fixedItems.reduce((s, fi) => s + fi.qty, 0);
 
   const offerPrice =
-    form.originalPrice && form.discountPct
+    form.originalPrice !== "" && form.originalPrice != null
       ? Math.round(
-          Number(form.originalPrice) * (1 - Number(form.discountPct) / 100),
+          Number(form.originalPrice) *
+            (1 - Number(form.discountPct || 0) / 100),
+        )
+      : null;
+
+  // pick-box live preview: base price, discount %, and a note that add-ons
+  // (set per-product) can push the price up before the discount is applied
+  const pickPreviewSubtotal =
+    form.basePrice !== "" && form.basePrice != null
+      ? Number(form.basePrice)
+      : null;
+  const pickPreviewTotal =
+    pickPreviewSubtotal != null
+      ? Math.round(
+          pickPreviewSubtotal * (1 - Number(form.discountPct || 0) / 100),
         )
       : null;
 
@@ -117,12 +131,12 @@ const BundleFormModal = ({ bundle, onClose, onSaved }) => {
 
     if (form.type === "pick") {
       if (!form.quantity) return alert("Quantity required");
-      if (!form.discountPct) return alert("Discount % required");
+      if (form.basePrice === "" || form.basePrice == null)
+        return alert("Base price required");
     } else {
       if (form.fixedItems.length === 0)
         return alert("Pick at least one product for the box");
       if (!form.originalPrice) return alert("Original price required");
-      if (!form.discountPct) return alert("Discount % required");
     }
 
     setSaving(true);
@@ -134,7 +148,9 @@ const BundleFormModal = ({ bundle, onClose, onSaved }) => {
               name: form.name,
               description: form.description,
               quantity: form.quantity,
-              discountPct: form.discountPct,
+              basePrice: Number(form.basePrice),
+              discountPct:
+                form.discountPct !== "" ? Number(form.discountPct) : 0,
               eligibleCategories: form.eligibleCategories,
               image: form.image,
               available: form.available,
@@ -146,7 +162,8 @@ const BundleFormModal = ({ bundle, onClose, onSaved }) => {
               image: form.image,
               available: form.available,
               originalPrice: Number(form.originalPrice),
-              discountPct: Number(form.discountPct),
+              discountPct:
+                form.discountPct !== "" ? Number(form.discountPct) : 0,
               offerPrice,
               quantity: form.fixedItems.reduce((s, fi) => s + fi.qty, 0), // ← ADD THIS
               fixedItems: form.fixedItems
@@ -246,13 +263,36 @@ const BundleFormModal = ({ bundle, onClose, onSaved }) => {
                 }
               />
 
-              <label className="form-label">Discount % *</label>
+              <label className="form-label">Base Price (EGP) *</label>
+              <p
+                style={{
+                  fontSize: 11,
+                  color: "#9a8878",
+                  margin: "0 0 6px",
+                  fontFamily: "'DM Sans',sans-serif",
+                }}
+              >
+                Flat price for the bundle itself, before any flavour add-ons or
+                the discount below.
+              </p>
               <input
                 className="form-input"
                 type="number"
-                min="1"
+                min="0"
+                placeholder="e.g. 200"
+                value={form.basePrice}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, basePrice: e.target.value }))
+                }
+              />
+
+              <label className="form-label">Discount % (optional)</label>
+              <input
+                className="form-input"
+                type="number"
+                min="0"
                 max="100"
-                placeholder="e.g. 10"
+                placeholder="e.g. 10 — leave blank for no discount"
                 value={form.discountPct}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, discountPct: e.target.value }))
@@ -260,7 +300,7 @@ const BundleFormModal = ({ bundle, onClose, onSaved }) => {
               />
 
               {/* live preview */}
-              {form.discountPct > 0 && (
+              {pickPreviewSubtotal != null && (
                 <p
                   style={{
                     fontFamily: "'DM Sans',sans-serif",
@@ -270,8 +310,11 @@ const BundleFormModal = ({ bundle, onClose, onSaved }) => {
                     fontWeight: 600,
                   }}
                 >
-                  Customer saves {form.discountPct}% off the total price of any{" "}
-                  {form.quantity} items
+                  Base {pickPreviewSubtotal.toLocaleString()} EGP
+                  {Number(form.discountPct) > 0
+                    ? ` → ${pickPreviewTotal?.toLocaleString()} EGP after ${form.discountPct}% off`
+                    : ""}{" "}
+                  (plus any flavour add-ons, set per product)
                 </p>
               )}
 
@@ -464,13 +507,13 @@ const BundleFormModal = ({ bundle, onClose, onSaved }) => {
                 }
               />
 
-              <label className="form-label">Discount % *</label>
+              <label className="form-label">Discount % (optional)</label>
               <input
                 className="form-input"
                 type="number"
-                min="1"
+                min="0"
                 max="100"
-                placeholder="e.g. 15"
+                placeholder="e.g. 15 — leave blank for no discount"
                 value={form.discountPct}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, discountPct: e.target.value }))
@@ -578,12 +621,14 @@ const BundleFormModal = ({ bundle, onClose, onSaved }) => {
    CUSTOMER PRODUCT PICKER MODAL (Pick Your Own only)
    — disabled entirely when the store is closed
    — limited to bundle.eligibleCategories, if any are set
+   — pricing: bundle.basePrice + Σ(product.bundleAddOn × qty), then discountPct
 ═══════════════════════════════════════════════ */
 const ProductPickerModal = ({ bundle, onClose, onAddToCart, isStoreOpen }) => {
   const [products, setProducts] = useState([]);
   // selected: { [productId]: { product, qty } }
   const [selected, setSelected] = useState({});
   const max = Number(bundle.quantity);
+  const basePrice = Number(bundle.basePrice) || 0;
 
   // back-compat: older bundles may carry a single `eligibleCategory` string
   // instead of the `eligibleCategories` array
@@ -630,11 +675,13 @@ const ProductPickerModal = ({ bundle, onClose, onAddToCart, isStoreOpen }) => {
     });
   };
 
-  const subtotal = Object.values(selected).reduce(
-    (s, { product, qty }) => s + getPrice(product) * qty,
+  const discountPct = Number(bundle.discountPct) || 0;
+  const addOnsTotal = Object.values(selected).reduce(
+    (s, { product, qty }) => s + getAddOn(product) * qty,
     0,
   );
-  const discount = Math.round((subtotal * bundle.discountPct) / 100);
+  const subtotal = basePrice + addOnsTotal;
+  const discount = Math.round((subtotal * discountPct) / 100);
   const total = subtotal - discount;
   const done = totalSelected === max;
 
@@ -679,8 +726,8 @@ const ProductPickerModal = ({ bundle, onClose, onAddToCart, isStoreOpen }) => {
               marginBottom: 10,
             }}
           >
-            Pick {max} item{max !== 1 ? "s" : ""} total — save{" "}
-            {bundle.discountPct}% off
+            Pick {max} item{max !== 1 ? "s" : ""} total
+            {discountPct > 0 ? ` — save ${discountPct}% off` : ""}
           </p>
 
           {/* progress bar */}
@@ -732,7 +779,7 @@ const ProductPickerModal = ({ bundle, onClose, onAddToCart, isStoreOpen }) => {
                 const on = qty > 0;
                 const canAdd = isStoreOpen && totalSelected < max;
                 const canRemove = isStoreOpen && qty > 0;
-                const price = getPrice(p);
+                const addOn = getAddOn(p);
 
                 return (
                   <div
@@ -791,11 +838,14 @@ const ProductPickerModal = ({ bundle, onClose, onAddToCart, isStoreOpen }) => {
                         style={{
                           fontFamily: "'DM Sans',sans-serif",
                           fontSize: 11,
-                          color: "#9a8878",
+                          color: addOn > 0 ? "#c4712a" : "#9a8878",
+                          fontWeight: addOn > 0 ? 700 : 400,
                           margin: "2px 0 0",
                         }}
                       >
-                        {Number(price).toLocaleString()} EGP each
+                        {addOn > 0
+                          ? `+${Number(addOn).toLocaleString()} EGP each`
+                          : "No extra charge"}
                       </p>
                     </div>
 
@@ -868,8 +918,8 @@ const ProductPickerModal = ({ bundle, onClose, onAddToCart, isStoreOpen }) => {
                       </button>
                     </div>
 
-                    {/* line total */}
-                    {qty > 0 && (
+                    {/* line total (add-on only) */}
+                    {qty > 0 && addOn > 0 && (
                       <span
                         style={{
                           fontFamily: "'DM Sans',sans-serif",
@@ -881,7 +931,7 @@ const ProductPickerModal = ({ bundle, onClose, onAddToCart, isStoreOpen }) => {
                           textAlign: "right",
                         }}
                       >
-                        {(price * qty).toLocaleString()} EGP
+                        +{(addOn * qty).toLocaleString()} EGP
                       </span>
                     )}
                   </div>
@@ -913,25 +963,41 @@ const ProductPickerModal = ({ bundle, onClose, onAddToCart, isStoreOpen }) => {
                   marginBottom: 4,
                 }}
               >
-                <span style={{ color: "#9a8878" }}>Subtotal</span>
+                <span style={{ color: "#9a8878" }}>Base price</span>
                 <span style={{ color: "#1a0f05" }}>
-                  {subtotal.toLocaleString()} EGP
+                  {basePrice.toLocaleString()} EGP
                 </span>
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: 4,
-                }}
-              >
-                <span style={{ color: "#c4712a", fontWeight: 600 }}>
-                  Bundle discount ({bundle.discountPct}%)
-                </span>
-                <span style={{ color: "#c4712a", fontWeight: 600 }}>
-                  − {discount.toLocaleString()} EGP
-                </span>
-              </div>
+              {addOnsTotal > 0 && (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: 4,
+                  }}
+                >
+                  <span style={{ color: "#9a8878" }}>Flavour add-ons</span>
+                  <span style={{ color: "#1a0f05" }}>
+                    + {addOnsTotal.toLocaleString()} EGP
+                  </span>
+                </div>
+              )}
+              {discountPct > 0 && (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: 4,
+                  }}
+                >
+                  <span style={{ color: "#c4712a", fontWeight: 600 }}>
+                    Bundle discount ({discountPct}%)
+                  </span>
+                  <span style={{ color: "#c4712a", fontWeight: 600 }}>
+                    − {discount.toLocaleString()} EGP
+                  </span>
+                </div>
+              )}
               <div
                 style={{
                   display: "flex",
@@ -1062,22 +1128,24 @@ const BundleCard = ({
             </div>
           )}
 
-          {/* discount badge */}
-          <span
-            style={{
-              position: "absolute",
-              top: 10,
-              left: 10,
-              background: "#c4712a",
-              color: "#fff",
-              fontSize: 11,
-              fontWeight: 700,
-              padding: "4px 10px",
-              borderRadius: 999,
-            }}
-          >
-            {bundle.discountPct}% Off
-          </span>
+          {/* discount badge — only shown when there's an actual discount */}
+          {Number(bundle.discountPct) > 0 && (
+            <span
+              style={{
+                position: "absolute",
+                top: 10,
+                left: 10,
+                background: "#c4712a",
+                color: "#fff",
+                fontSize: 11,
+                fontWeight: 700,
+                padding: "4px 10px",
+                borderRadius: 999,
+              }}
+            >
+              {bundle.discountPct}% Off
+            </span>
+          )}
 
           {!isAvail && (
             <div className="out-of-stock-overlay">
@@ -1127,13 +1195,22 @@ const BundleCard = ({
                   <span
                     className="product-card-price"
                     style={{ fontSize: 13, fontWeight: 600 }}
-                  ></span>
-                  <span
-                    className="product-card-save"
-                    style={{ marginRight: 10 }}
                   >
-                    Save {bundle.discountPct}%
+                    Starting from{" "}
+                    {Math.round(
+                      Number(bundle.basePrice || 0) *
+                        (1 - Number(bundle.discountPct || 0) / 100),
+                    ).toLocaleString()}{" "}
+                    EGP
                   </span>
+                  {Number(bundle.discountPct) > 0 && (
+                    <span
+                      className="product-card-save"
+                      style={{ marginRight: 10 }}
+                    >
+                      Save {bundle.discountPct}%
+                    </span>
+                  )}
                 </>
               )}
             </div>
@@ -1223,6 +1300,7 @@ const BundleSection = ({ onAddToCart, isStoreOpen = true }) => {
               name: bundle.name,
               description: bundle.description,
               quantity: bundle.quantity,
+              basePrice: bundle.basePrice,
               discountPct: bundle.discountPct,
               eligibleCategories: bundle.eligibleCategories ?? [],
               image: bundle.image,

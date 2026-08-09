@@ -676,6 +676,8 @@ const StatusDropdown = ({ value, onChange }) => {
     the bundle's products being flattened into the plain items list. */
 const OrderBundleLine = ({ bundle }) => {
   const pct = bundle.discountPct || 0;
+  const isBox = bundle.type === "static";
+
   return (
     <div
       className="order-item-row order-bundle-row"
@@ -706,18 +708,26 @@ const OrderBundleLine = ({ bundle }) => {
         </span>
       </div>
       <div style={{ paddingLeft: 18, fontSize: 13, color: "#7a6a5a" }}>
-        {bundle.items.map((bi, idx) => (
-          <div
-            key={idx}
-            style={{ display: "flex", justifyContent: "space-between" }}
-          >
-            <span>
-              {bi.productName}
-              {bi.quantity > 1 ? ` ×${bi.quantity}` : ""}
-            </span>
-            <span>{fmt(bi.price * bi.quantity)} EGP</span>
-          </div>
-        ))}
+        {isBox
+          ? // Box: just the flavor list, no per-item price — the box
+            // total above is the only price that matters.
+            bundle.items.map((bi, idx) => (
+              <div key={idx}>
+                {bi.productName}
+                {bi.quantity > 1 ? ` ×${bi.quantity}` : ""}
+              </div>
+            ))
+          : bundle.items.map((bi, idx) => (
+              <div
+                key={idx}
+                style={{ display: "flex", justifyContent: "space-between" }}
+              >
+                <span>
+                  {bi.productName}
+                  {bi.quantity > 1 ? ` ×${bi.quantity}` : ""}
+                </span>
+              </div>
+            ))}
       </div>
     </div>
   );

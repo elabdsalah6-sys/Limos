@@ -748,6 +748,24 @@ select.form-input {
   font-weight: 500;
 }
 
+/* ═══════════════════════════════════════════════
+   PHOTO UPLOAD (single, consolidated rule — was
+   previously duplicated with conflicting overflow/
+   display values, which is what caused the preview
+   image to visually spill over the fields below it)
+═══════════════════════════════════════════════ */
+.form-img-upload-area {
+  border: 1.5px dashed #d0c4b4;
+  border-radius: 8px;
+  margin-top: 6px;
+  min-height: 120px;
+  overflow: hidden; /* clip content to the box — no spillover */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
 .form-img-placeholder {
   display: flex;
   flex-direction: column;
@@ -772,7 +790,8 @@ select.form-input {
 
 .form-img-preview {
   width: 100%;
-  height: auto; /* image keeps its own natural aspect ratio */
+  max-height: 260px; /* cap runaway-tall uploads so they can't push/overlap the rest of the form */
+  object-fit: cover;
   display: block;
 }
 
@@ -1047,13 +1066,6 @@ select.form-input {
   color: #fdf6ec;
 }
 
-.form-img-upload-area {
-  border: 1.5px dashed #d0c4b4;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-top: 6px;
-}
-
 .form-img-choose-btn {
   display: block;
   width: 100%;
@@ -1135,13 +1147,4 @@ select.form-input {
   100% {
     opacity: 0;
   }
-}
-
-.form-img-upload-area {
-  min-height: 120px; /* let it grow instead of clipping */
-  overflow: visible;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
 }

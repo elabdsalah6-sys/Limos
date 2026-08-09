@@ -28,6 +28,9 @@ const EMPTY_FORM = {
   boxSizes: [],
   offer: { label: "", active: false },
   available: true,
+  // Flat charge applied only when this product is picked inside a
+  // "Pick Your Own" bundle — completely separate from its menu/sale price.
+  bundleAddOn: "",
 };
 
 /* ═══════════════════════════════════════════════
@@ -151,6 +154,7 @@ const Menu = () => {
       boxSizes: p.boxSizes || [],
       offer: p.offer || { label: "", active: false },
       available: p.available ?? true,
+      bundleAddOn: p.bundleAddOn ?? "",
     });
     setFlavorInput("");
     setFormOpen(true);
@@ -199,6 +203,7 @@ const Menu = () => {
             s.originalPrice !== "" ? Number(s.originalPrice) : undefined,
           offerActive: s.offerActive,
         })),
+        bundleAddOn: form.bundleAddOn !== "" ? Number(form.bundleAddOn) : 0,
       };
       if (editingProduct) {
         await API.put(`/products/${editingProduct._id}`, payload);
@@ -247,6 +252,7 @@ const Menu = () => {
         boxSizes: product.boxSizes,
         offer: product.offer,
         available: !product.available,
+        bundleAddOn: product.bundleAddOn ?? 0,
       });
     } catch {
       setProducts((ps) =>
@@ -537,6 +543,32 @@ const Menu = () => {
               <button className="form-add-link" onClick={addSize}>
                 + Add size
               </button>
+
+              <label className="form-label" style={{ marginTop: 16 }}>
+                Bundle Add-on (EGP)
+              </label>
+              <p
+                style={{
+                  fontSize: 11,
+                  color: "#9a8878",
+                  margin: "0 0 6px",
+                  fontFamily: "'DM Sans',sans-serif",
+                }}
+              >
+                Extra charge applied when a customer picks this product inside a
+                "Pick Your Own" bundle. This is separate from the price/sale
+                above — leave 0 (or blank) for no extra charge.
+              </p>
+              <input
+                className="form-input"
+                type="number"
+                min="0"
+                placeholder="e.g. 10"
+                value={form.bundleAddOn}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, bundleAddOn: e.target.value }))
+                }
+              />
 
               <label className="form-label">Flavors</label>
               <div className="form-flavor-row">
