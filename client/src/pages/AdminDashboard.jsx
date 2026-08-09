@@ -52,6 +52,8 @@ const getAddon = (productName) => {
   return ADDON_TIERS.find((tier) => tier.names.some((n) => lower.includes(n)));
 };
 
+const getAddOn = (p) => Number(p?.bundleAddOn) || 0;
+
 /* ═══════════════════════════════════════════════
     MAIN
   ═══════════════════════════════════════════════ */
@@ -744,8 +746,9 @@ const getDefaultSize = (p) => {
 };
 
 const CashierBundlePicker = ({ bundle, products, onClose, onConfirm }) => {
-  const [selected, setSelected] = useState({}); // { productId: { product, size, qty } }
+  const [selected, setSelected] = useState({}); // { productId: { product, qty } }
   const max = Number(bundle.quantity);
+  const basePrice = Number(bundle.basePrice) || 0;
 
   const allowedCategories =
     bundle.eligibleCategories?.length > 0 ? bundle.eligibleCategories : [];
@@ -757,10 +760,9 @@ const CashierBundlePicker = ({ bundle, products, onClose, onConfirm }) => {
 
   const addOne = (p) => {
     if (totalSelected >= max) return;
-    const size = getDefaultSize(p);
     setSelected((prev) => ({
       ...prev,
-      [p._id]: { product: p, size, qty: (prev[p._id]?.qty ?? 0) + 1 },
+      [p._id]: { product: p, qty: (prev[p._id]?.qty ?? 0) + 1 },
     }));
   };
 
@@ -776,20 +778,22 @@ const CashierBundlePicker = ({ bundle, products, onClose, onConfirm }) => {
     });
   };
 
-  const subtotal = Object.values(selected).reduce(
-    (s, { size, qty }) => s + (size?.price ?? 0) * qty,
+  // pricing now mirrors the customer "Pick Your Own" flow:
+  // base price + Σ(product.bundleAddOn × qty), then the bundle discount.
+  const addOnsTotal = Object.values(selected).reduce(
+    (s, { product, qty }) => s + getAddOn(product) * qty,
     0,
   );
+  const subtotal = basePrice + addOnsTotal;
   const discountAmount = Math.round((subtotal * bundle.discountPct) / 100);
   const finalPrice = subtotal - discountAmount;
   const done = totalSelected === max;
 
   const handleConfirmClick = () => {
-    const items = Object.values(selected).map(({ product, size, qty }) => ({
+    const items = Object.values(selected).map(({ product, qty }) => ({
       product: product._id,
       productName: product.name,
-      selectedSize: size.label,
-      price: size.price,
+      price: getAddOn(product), // store the add-on charge, not the menu price
       quantity: qty,
     }));
     onConfirm({
@@ -820,9 +824,24 @@ const CashierBundlePicker = ({ bundle, products, onClose, onConfirm }) => {
           </p>
           {scoped.map((p) => {
             const qty = selected[p._id]?.qty ?? 0;
+            const addOn = getAddOn(p);
             return (
               <div key={p._id} className="cashier-picker-row">
-                <span className="cashier-picker-name">{p.name}</span>
+                <span className="cashier-picker-name">
+                  {p.name}
+                  {addOn > 0 && (
+                    <span
+                      style={{
+                        marginLeft: 8,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "#c4712a",
+                      }}
+                    >
+                      +{fmt(addOn)} EGP
+                    </span>
+                  )}
+                </span>
                 <button
                   className="cashier-picker-step-btn"
                   onClick={() => removeOne(p)}
@@ -841,6 +860,43 @@ const CashierBundlePicker = ({ bundle, products, onClose, onConfirm }) => {
               </div>
             );
           })}
+
+          {totalSelected > 0 && (
+            <div
+              style={{
+                background: "#f0e8dc",
+                borderRadius: 8,
+                padding: "10px 14px",
+                marginTop: 12,
+                fontSize: 13,
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: "#9a8878" }}>Base price</span>
+                <span>{fmt(basePrice)} EGP</span>
+              </div>
+              {addOnsTotal > 0 && (
+                <div
+                  style={{ display: "flex", justifyContent: "space-between" }}
+                >
+                  <span style={{ color: "#9a8878" }}>Flavour add-ons</span>
+                  <span>+ {fmt(addOnsTotal)} EGP</span>
+                </div>
+              )}
+              {bundle.discountPct > 0 && (
+                <div
+                  style={{ display: "flex", justifyContent: "space-between" }}
+                >
+                  <span style={{ color: "#c4712a", fontWeight: 600 }}>
+                    Discount ({bundle.discountPct}%)
+                  </span>
+                  <span style={{ color: "#c4712a", fontWeight: 600 }}>
+                    − {fmt(discountAmount)} EGP
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div className="modal-footer">
           <button className="btn-ghost" onClick={onClose}>
