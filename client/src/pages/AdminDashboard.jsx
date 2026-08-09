@@ -1124,7 +1124,7 @@ const CashierTab = () => {
             <label className="form-label">Customer name (optional)</label>
             <input
               className="form-input"
-              placeholder="Walk-in customer"
+              placeholder="Cashier"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
             />
