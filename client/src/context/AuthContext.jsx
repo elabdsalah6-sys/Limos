@@ -1,21 +1,22 @@
 import { createContext, useContext, useState } from "react";
+import safeStorage from "../utils/safeStorage";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(
-    localStorage.getItem("user")
-      ? JSON.parse(localStorage.getItem("user"))
+    safeStorage.getItem("user")
+      ? JSON.parse(safeStorage.getItem("user"))
       : null,
   );
 
   const login = (userData) => {
-    localStorage.setItem("user", JSON.stringify(userData));
+    safeStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem("user");
+    safeStorage.removeItem("user");
     setUser(null);
   };
 

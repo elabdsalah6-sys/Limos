@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import API from "../api/axios";
 import "./AdminDashboard.css";
 import { io } from "socket.io-client";
+import safeStorage from "../utils/safeStorage";
 
 /* ─── helpers ─────────────────────────────────────────────────── */
 const STATUS_FLOW = [
@@ -1894,7 +1895,7 @@ const UsersTab = ({ refreshKey }) => {
 
   useEffect(() => {
     // get the logged-in user's role from localStorage/AuthContext
-    const stored = localStorage.getItem("user");
+    const stored = safeStorage.getItem("user");
     if (stored) setCurrentUser(JSON.parse(stored));
   }, []);
 

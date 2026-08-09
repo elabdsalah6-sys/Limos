@@ -1,19 +1,20 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import safeStorage from "../utils/safeStorage";
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("cart")) || [];
+      return JSON.parse(safeStorage.getItem("cart")) || [];
     } catch {
       return [];
     }
   });
 
-  // sync to localStorage whenever cart changes
+  // sync to safeStorage whenever cart changes
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart));
+    safeStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 
   const addItem = (product, qty, size) => {

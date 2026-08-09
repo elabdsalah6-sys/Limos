@@ -1,4 +1,5 @@
 import axios from "axios";
+import safeStorage from "../utils/safeStorage";
 
 const RAW_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 const BASE_URL = RAW_BASE_URL.replace(/\/api\/?$/, "");
@@ -7,7 +8,7 @@ const API = axios.create({
 });
 
 API.interceptors.request.use((req) => {
-  const user = localStorage.getItem("user");
+  const user = safeStorage.getItem("user");
   if (user) {
     req.headers.Authorization = `Bearer ${JSON.parse(user).token}`;
   }
@@ -18,7 +19,7 @@ API.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("user");
+      safeStorage.removeItem("user");
       window.location.replace("/");
     }
     return Promise.reject(error);

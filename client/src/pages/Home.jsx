@@ -8,6 +8,7 @@ import { useStore } from "../context/StoreContext";
 import API from "../api/axios";
 import Reviews from "./Reviews";
 import { uploadImage } from "../utils/uploadImage";
+import safeStorage from "../utils/safeStorage";
 
 const HERO_IMG_KEY = "limos_hero_image";
 
@@ -179,7 +180,7 @@ const Home = () => {
 
   // Load hero bg
   useEffect(() => {
-    const saved = localStorage.getItem(HERO_IMG_KEY);
+    const saved = safeStorage.getItem(HERO_IMG_KEY);
     setHeroBg(saved || defaultHeroBg);
   }, []);
 
@@ -218,7 +219,7 @@ const Home = () => {
     if (!file) return;
     try {
       const url = await uploadImage(file);
-      localStorage.setItem(HERO_IMG_KEY, url);
+      safeStorage.setItem(HERO_IMG_KEY, url);
       setHeroBg(url);
     } catch (err) {
       alert("Image upload failed, please try again");
@@ -226,7 +227,7 @@ const Home = () => {
   };
 
   const handleRemoveBg = () => {
-    localStorage.removeItem(HERO_IMG_KEY);
+    safeStorage.removeItem(HERO_IMG_KEY);
     setHeroBg(defaultHeroBg);
     fileInputRef.current.value = "";
   };
