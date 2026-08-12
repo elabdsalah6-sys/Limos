@@ -1672,3 +1672,45 @@ select.form-input {
   font-size: 10px;
   color: #b0a090;
 }
+
+/* ═══════════════════════════════════════════════
+   POS TOAST
+═══════════════════════════════════════════════ */
+.pos-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px;
+  border-radius: 999px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(30, 15, 5, 0.24);
+  animation: toast-in 0.25s ease-out;
+  white-space: nowrap;
+}
+.pos-toast i {
+  font-size: 16px;
+}
+.pos-toast--success {
+  background: #1a7840;
+}
+.pos-toast--error {
+  background: #a02820;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}

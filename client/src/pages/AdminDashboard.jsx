@@ -510,6 +510,7 @@ const OverviewTab = ({ refreshKey }) => {
   const [revenue, setRevenue] = useState(null);
   const [loading, setLoading] = useState(true);
 
+
   useEffect(() => {
     setLoading(true);
     Promise.all([API.get("/admin/analytics"), API.get("/orders")])
@@ -921,6 +922,9 @@ const CashierBundlePicker = ({ bundle, products, onClose, onConfirm }) => {
 /* ═══════════════════════════════════════════════
     CASHIER TAB
   ═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════
+    CASHIER TAB
+  ═══════════════════════════════════════════════ */
 const CashierTab = () => {
   const [products, setProducts] = useState([]);
   const [bundles, setBundles] = useState([]);
@@ -932,6 +936,7 @@ const CashierTab = () => {
   const [customerName, setCustomerName] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState(null); // { type: 'success' | 'error', message: string }
   const PRICE_ADDONS = [5, 10, 15];
 
   useEffect(() => {
@@ -943,6 +948,13 @@ const CashierTab = () => {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  // Auto-dismiss the toast after 3s
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   const addToCart = (product, size) => {
     setCart((prev) => {
@@ -1059,16 +1071,23 @@ const CashierTab = () => {
   const total = itemsTotal + bundlesTotal;
 
   const handleConfirm = async () => {
-    if (cart.length === 0 && bundleCart.length === 0)
-      return alert("Cart is empty.");
+    if (cart.length === 0 && bundleCart.length === 0) {
+      setToast({ type: "error", message: "Cart is empty." });
+      return;
+    }
     for (const l of cart) {
       if (l.price === "" || Number(l.price) < 0 || l.quantity < 1) {
-        return alert("Check item prices and quantities.");
+        setToast({
+          type: "error",
+          message: "Check item prices and quantities.",
+        });
+        return;
       }
     }
     for (const b of bundleCart) {
       if (b.finalPrice === "" || Number(b.finalPrice) < 0) {
-        return alert("Check bundle prices.");
+        setToast({ type: "error", message: "Check bundle prices." });
+        return;
       }
     }
     setSubmitting(true);
@@ -1086,9 +1105,12 @@ const CashierTab = () => {
       setBundleCart([]);
       setCustomerName("");
       setNotes("");
-      alert("Sale confirmed.");
+      setToast({ type: "success", message: "Sale confirmed." });
     } catch (err) {
-      alert(err?.response?.data?.message || "Failed to confirm sale.");
+      setToast({
+        type: "error",
+        message: err?.response?.data?.message || "Failed to confirm sale.",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -1102,6 +1124,17 @@ const CashierTab = () => {
 
   return (
     <>
+      {toast && (
+        <div className={`pos-toast pos-toast--${toast.type}`}>
+          <i
+            className={`ti ${
+              toast.type === "success" ? "ti-circle-check" : "ti-alert-circle"
+            }`}
+          />
+          <span>{toast.message}</span>
+        </div>
+      )}
+
       <div className="admin-toolbar">
         <div className="admin-toolbar-title">Cashier</div>
         <div className="admin-toolbar-right">
