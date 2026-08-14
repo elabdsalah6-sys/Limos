@@ -1093,7 +1093,11 @@ const BundleCard = ({
         </div>
       )}
 
-      <div className="product-card">
+      <div
+        className="product-card"
+        onClick={canOrder ? (isStatic ? onAddFixed : onPick) : undefined}
+        style={canOrder ? { cursor: "pointer" } : undefined}
+      >
         <div className="product-card-img">
           {bundle.image ? (
             <img
@@ -1218,7 +1222,10 @@ const BundleCard = ({
             {canOrder && (
               <button
                 className="product-card-add"
-                onClick={isStatic ? onAddFixed : onPick}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  isStatic ? onAddFixed() : onPick();
+                }}
               >
                 +
               </button>

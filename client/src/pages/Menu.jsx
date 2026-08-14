@@ -779,7 +779,11 @@ const ProductCard = ({
         </div>
       )}
 
-      <div className="product-card">
+      <div
+        className="product-card"
+        onClick={canOrder ? handleAdd : undefined}
+        style={canOrder ? { cursor: "pointer" } : undefined}
+      >
         <div className="product-card-img">
           {p.image && (
             <img src={p.image} alt={p.name} className="product-card-photo" />
@@ -800,7 +804,6 @@ const ProductCard = ({
         <div className="product-card-body">
           <div className="product-card-tag">{p.category}</div>
 
-          {/* Signature / Premium badge — inline in text flow, no overlap */}
           {p.flavorType && (
             <span
               className={`flavor-type-badge flavor-type-badge--${p.flavorType}`}

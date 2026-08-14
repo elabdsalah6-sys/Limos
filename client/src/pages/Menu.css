@@ -1148,3 +1148,7 @@ select.form-input {
     opacity: 0;
   }
 }
+
+.product-card-img.clickable {
+  cursor: pointer;
+}
