@@ -505,23 +505,41 @@ const RegionsTab = ({ refreshKey }) => {
 /* ═══════════════════════════════════════════════
     OVERVIEW TAB
   ═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════
+    OVERVIEW TAB
+  ═══════════════════════════════════════════════ */
 const OverviewTab = ({ refreshKey }) => {
   const [data, setData] = useState(null);
   const [revenue, setRevenue] = useState(null);
   const [loading, setLoading] = useState(true);
 
-
   useEffect(() => {
     setLoading(true);
-    Promise.all([API.get("/admin/analytics"), API.get("/orders")])
+    const start = Date.now();
+
+    console.log("📊 OverviewTab: fetching analytics and orders...");
+
+    Promise.all([
+      API.get("/admin/analytics"),
+      API.get("/orders?limit=100"), // Limit orders to 100 for revenue calculation (not all)
+    ])
       .then(([analyticsRes, ordersRes]) => {
+        const elapsed = Date.now() - start;
+
+        // Extract orders from paginated response
+        const orders = ordersRes.data.orders || ordersRes.data;
+        console.log(`✅ Analytics loaded in ${elapsed}ms`);
+        console.log(`   - Orders returned: ${orders.length}`);
+        console.log(`   - Analytics response:`, analyticsRes.data);
+
         setData(analyticsRes.data);
 
         // Revenue = sum of (totalPrice − delivery fee) for delivered orders only.
         // Pickup orders have no delivery fee; delivery orders subtract
         // deliveryRegion.price so the figure reflects product revenue,
         // not money that just passed through to a courier.
-        const total = (ordersRes.data || [])
+        const revenueStart = Date.now();
+        const total = orders
           .filter((o) => o.status === "delivered")
           .reduce((sum, o) => {
             const deliveryFee =
@@ -530,9 +548,17 @@ const OverviewTab = ({ refreshKey }) => {
                 : (o.deliveryRegion?.price ?? 0);
             return sum + (o.totalPrice - deliveryFee);
           }, 0);
+
+        const revenueElapsed = Date.now() - revenueStart;
+        console.log(
+          `✅ Revenue calculated in ${revenueElapsed}ms: ${total} EGP`,
+        );
+
         setRevenue(total);
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.error("❌ OverviewTab error:", err);
+      })
       .finally(() => setLoading(false));
   }, [refreshKey]);
 
@@ -1392,12 +1418,21 @@ const OrdersTab = ({ refreshKey, onOrderUpdated }) => {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(null);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 30,
+    pages: 1,
+  });
 
-  const fetchOrders = useCallback(async () => {
+  const fetchOrders = useCallback(async (page = 1) => {
     try {
       setLoading(true);
-      const { data } = await API.get("/orders");
-      setOrders(data);
+      const { data } = await API.get("/orders", {
+        params: { page, limit: 30 },
+      });
+      setOrders(data.orders); // Extract orders from response
+      setPagination(data.pagination); // Store pagination data
     } catch (err) {
       console.error(err);
     } finally {
@@ -1405,12 +1440,8 @@ const OrdersTab = ({ refreshKey, onOrderUpdated }) => {
     }
   }, []);
 
-  // The socket connection now lives in the parent <AdminDashboard />.
-  // This tab just refetches whenever the shared refreshKey changes
-  // (i.e. whenever a "new_order" or other relevant event fires),
-  // whether or not this tab is the one currently visible.
   useEffect(() => {
-    fetchOrders();
+    fetchOrders(1); // Always fetch page 1 on refresh
   }, [fetchOrders, refreshKey]);
 
   const handleStatusChange = async (orderId, status) => {
@@ -1473,259 +1504,301 @@ const OrdersTab = ({ refreshKey, onOrderUpdated }) => {
           <p>Try a different filter or search term.</p>
         </div>
       ) : (
-        <div className="admin-list">
-          {visible.map((o) => {
-            const customerName = o.user?.name || o.guestInfo?.name || "Guest";
-            const customerEmail = o.user?.email || o.guestInfo?.email || "";
-            const customerPhone = o.checkoutPhone || o.guestInfo?.phone || "";
-            const secondaryPhone =
-              o.secondaryPhone || o.guestInfo?.secondaryPhone || "";
-            const isOpen = expanded === o._id;
-            const hasDiscount = o.discountCode && o.discountSavings > 0;
-            const originalPrice = hasDiscount
-              ? o.totalPrice + o.discountSavings
-              : null;
-            const shortId = o._id.slice(-6).toUpperCase();
+        <>
+          <div className="admin-list">
+            {visible.map((o) => {
+              const customerName = o.user?.name || o.guestInfo?.name || "Guest";
+              const customerEmail = o.user?.email || o.guestInfo?.email || "";
+              const customerPhone = o.checkoutPhone || o.guestInfo?.phone || "";
+              const secondaryPhone =
+                o.secondaryPhone || o.guestInfo?.secondaryPhone || "";
+              const isOpen = expanded === o._id;
+              const hasDiscount = o.discountCode && o.discountSavings > 0;
+              const originalPrice = hasDiscount
+                ? o.totalPrice + o.discountSavings
+                : null;
+              const shortId = o._id.slice(-6).toUpperCase();
 
-            return (
-              <div
-                key={o._id}
-                className={`admin-card${o.status === "pending" ? " admin-card--pending" : ""}`}
-              >
-                <div className="admin-card-top">
-                  <div>
-                    <div className="admin-card-title-row">
-                      <span className="admin-card-title">{customerName}</span>
-                      <button
-                        type="button"
-                        className="order-id-chip"
-                        title={`Full order ID: ${o._id} (click to copy)`}
-                        onClick={() => {
-                          navigator.clipboard?.writeText(o._id);
-                        }}
-                      >
-                        #{shortId}
-                      </button>
-                    </div>
-                    <div className="admin-card-meta">
-                      {customerEmail && <span>{customerEmail}</span>}
-                      {customerPhone && (
-                        <a
-                          href={`tel:${customerPhone}`}
-                          className="order-phone-link"
-                        >
-                          <i className="ti ti-phone" /> {customerPhone}
-                        </a>
-                      )}
-                      {secondaryPhone && (
-                        <a
-                          href={`tel:${secondaryPhone}`}
-                          className="order-phone-link"
-                        >
-                          <i className="ti ti-phone" /> {secondaryPhone}{" "}
-                          <span style={{ fontSize: 11, opacity: 0.7 }}>
-                            (2nd)
-                          </span>
-                        </a>
-                      )}
-                      <span> · {fmtDate(o.createdAt)}</span>
-                      <span className="order-time-chip">
-                        <i className="ti ti-clock" /> {fmtTime(o.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="admin-card-right">
-                    {/* Price: show strikethrough original + discounted if discount applied */}
-                    <div className="admin-card-price">
-                      {hasDiscount && (
-                        <span className="order-original-price">
-                          {fmt(originalPrice)} EGP
-                        </span>
-                      )}
-                      {fmt(o.totalPrice)} EGP
-                    </div>
-                  </div>
-                </div>
-
+              return (
                 <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 10,
-                    flexWrap: "wrap",
-                  }}
+                  key={o._id}
+                  className={`admin-card${o.status === "pending" ? " admin-card--pending" : ""}`}
                 >
-                  <StatusDropdown
-                    value={o.status}
-                    onChange={(status) => handleStatusChange(o._id, status)}
-                  />
+                  <div className="admin-card-top">
+                    <div>
+                      <div className="admin-card-title-row">
+                        <span className="admin-card-title">{customerName}</span>
+                        <button
+                          type="button"
+                          className="order-id-chip"
+                          title={`Full order ID: ${o._id} (click to copy)`}
+                          onClick={() => {
+                            navigator.clipboard?.writeText(o._id);
+                          }}
+                        >
+                          #{shortId}
+                        </button>
+                      </div>
+                      <div className="admin-card-meta">
+                        {customerEmail && <span>{customerEmail}</span>}
+                        {customerPhone && (
+                          <a
+                            href={`tel:${customerPhone}`}
+                            className="order-phone-link"
+                          >
+                            <i className="ti ti-phone" /> {customerPhone}
+                          </a>
+                        )}
+                        {secondaryPhone && (
+                          <a
+                            href={`tel:${secondaryPhone}`}
+                            className="order-phone-link"
+                          >
+                            <i className="ti ti-phone" /> {secondaryPhone}{" "}
+                            <span style={{ fontSize: 11, opacity: 0.7 }}>
+                              (2nd)
+                            </span>
+                          </a>
+                        )}
+                        <span> · {fmtDate(o.createdAt)}</span>
+                        <span className="order-time-chip">
+                          <i className="ti ti-clock" /> {fmtTime(o.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="admin-card-right">
+                      {/* Price: show strikethrough original + discounted if discount applied */}
+                      <div className="admin-card-price">
+                        {hasDiscount && (
+                          <span className="order-original-price">
+                            {fmt(originalPrice)} EGP
+                          </span>
+                        )}
+                        {fmt(o.totalPrice)} EGP
+                      </div>
+                    </div>
+                  </div>
 
-                  <button
-                    className="order-expand-btn"
-                    onClick={() => setExpanded(isOpen ? null : o._id)}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      flexWrap: "wrap",
+                    }}
                   >
-                    {isOpen ? "Hide details ▲" : "View details ▼"}
-                  </button>
-                </div>
+                    <StatusDropdown
+                      value={o.status}
+                      onChange={(status) => handleStatusChange(o._id, status)}
+                    />
 
-                {isOpen && (
-                  <>
-                    {o.notes && (
+                    <button
+                      className="order-expand-btn"
+                      onClick={() => setExpanded(isOpen ? null : o._id)}
+                    >
+                      {isOpen ? "Hide details ▲" : "View details ▼"}
+                    </button>
+                  </div>
+
+                  {isOpen && (
+                    <>
+                      {o.notes && (
+                        <div className="order-notes-box">
+                          <span className="order-notes-label">
+                            <i className="ti ti-note" /> Note from customer
+                          </span>
+                          <p className="order-notes-text">{o.notes}</p>
+                        </div>
+                      )}
+
+                      {/* Payment method + InstaPay sender number */}
                       <div className="order-notes-box">
                         <span className="order-notes-label">
-                          <i className="ti ti-note" /> Note from customer
+                          <i className="ti ti-credit-card" /> Payment
                         </span>
-                        <p className="order-notes-text">{o.notes}</p>
+                        <p className="order-notes-text">
+                          {o.paymentMethod === "instapay"
+                            ? "InstaPay"
+                            : o.paymentMethod === "card"
+                              ? "Card"
+                              : "Cash on Delivery"}
+                          {o.paymentMethod === "instapay" && (
+                            <>
+                              {" "}
+                              ·{" "}
+                              {o.senderInstapayNumber ? (
+                                <span>Sent from {o.senderInstapayNumber}</span>
+                              ) : (
+                                <span style={{ color: "#b02020" }}>
+                                  No sender number provided
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </p>
                       </div>
-                    )}
 
-                    {/* Payment method + InstaPay sender number */}
-                    <div className="order-notes-box">
-                      <span className="order-notes-label">
-                        <i className="ti ti-credit-card" /> Payment
-                      </span>
-                      <p className="order-notes-text">
-                        {o.paymentMethod === "instapay"
-                          ? "InstaPay"
-                          : o.paymentMethod === "card"
-                            ? "Card"
-                            : "Cash on Delivery"}
-                        {o.paymentMethod === "instapay" && (
+                      {/* Bundles purchased on this order */}
+                      {o.bundles?.length > 0 && (
+                        <div
+                          className="order-items-list"
+                          style={{ marginBottom: 10 }}
+                        >
+                          {o.bundles.map((b, i) => (
+                            <OrderBundleLine key={i} bundle={b} />
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="order-items-list">
+                        {o.items.map((item, i) => (
+                          <div
+                            key={i}
+                            className={`order-item-row${item.isLoyaltyReward ? " order-item-row--reward" : ""}`}
+                          >
+                            <span>
+                              {item.productName} ({item.selectedSize}) ×{" "}
+                              {item.quantity}
+                              {item.isLoyaltyReward && (
+                                <span className="loyalty-reward-tag">
+                                  <i className="ti ti-gift" /> FREE — Loyalty
+                                  Reward
+                                </span>
+                              )}
+                            </span>
+                            <span>
+                              {item.isLoyaltyReward
+                                ? "Free"
+                                : `${fmt(item.price * item.quantity)} EGP`}
+                            </span>
+                          </div>
+                        ))}
+
+                        {/* Subtotal row */}
+                        <div className="order-item-row order-subtotal-row">
+                          <span>Subtotal</span>
+                          <span>
+                            {fmt(
+                              o.items.reduce(
+                                (acc, i) => acc + i.price * i.quantity,
+                                0,
+                              ) +
+                                (o.bundles ?? []).reduce(
+                                  (acc, b) => acc + b.finalPrice,
+                                  0,
+                                ),
+                            )}{" "}
+                            EGP
+                          </span>
+                        </div>
+
+                        {/* Delivery fee row */}
+                        {o.fulfillmentType === "pickup" ? (
+                          <div className="order-item-row order-delivery-row">
+                            <span>
+                              <i className="ti ti-map-pin" /> Pickup from —{" "}
+                              {o.pickupLocation?.name ?? "—"}
+                              {o.pickupLocation?.address && (
+                                <span style={{ opacity: 0.65, fontSize: 12 }}>
+                                  {" "}
+                                  ({o.pickupLocation.address})
+                                </span>
+                              )}
+                            </span>
+                            <span>Free</span>
+                          </div>
+                        ) : (
                           <>
-                            {" "}
-                            ·{" "}
-                            {o.senderInstapayNumber ? (
-                              <span>Sent from {o.senderInstapayNumber}</span>
-                            ) : (
-                              <span style={{ color: "#b02020" }}>
-                                No sender number provided
-                              </span>
+                            {o.deliveryRegion && (
+                              <div className="order-item-row order-delivery-row">
+                                <span>
+                                  <i className="ti ti-map-pin" /> Delivery —{" "}
+                                  {o.deliveryRegion.name}
+                                </span>
+                                <span>
+                                  {o.deliveryRegion.price === 0
+                                    ? "Free"
+                                    : `${fmt(o.deliveryRegion.price)} EGP`}
+                                </span>
+                              </div>
+                            )}
+                            {o.deliveryAddress && (
+                              <div className="order-address-box">
+                                <span className="order-address-label">
+                                  <i className="ti ti-map-pin-filled" />{" "}
+                                  Delivery address
+                                </span>
+                                <p className="order-address-text">
+                                  {o.deliveryAddress}
+                                </p>
+                              </div>
                             )}
                           </>
                         )}
-                      </p>
-                    </div>
 
-                    {/* Bundles purchased on this order, shown as grouped
-                          cards (name + nested items + before/after price)
-                          instead of flattened into the plain items list. */}
-                    {o.bundles?.length > 0 && (
-                      <div
-                        className="order-items-list"
-                        style={{ marginBottom: 10 }}
-                      >
-                        {o.bundles.map((b, i) => (
-                          <OrderBundleLine key={i} bundle={b} />
-                        ))}
-                      </div>
-                    )}
+                        {/* Discount row */}
+                        {hasDiscount && (
+                          <div className="order-item-row order-discount-row">
+                            <span className="order-discount-label">
+                              <i className="ti ti-tag" /> Discount (
+                              {o.discountCode})
+                            </span>
+                            <span className="order-discount-saving">
+                              −{fmt(o.discountSavings)} EGP
+                            </span>
+                          </div>
+                        )}
 
-                    <div className="order-items-list">
-                      {o.items.map((item, i) => (
-                        <div key={i} className="order-item-row">
-                          <span>
-                            {item.productName} ({item.selectedSize}) ×{" "}
-                            {item.quantity}
-                          </span>
-                          <span>{fmt(item.price * item.quantity)} EGP</span>
-                        </div>
-                      ))}
-
-                      {/* Subtotal row — plain items + bundle final prices.
-                            Bundles are rendered as their own grouped cards
-                            above, but their money still belongs in the
-                            subtotal, otherwise it silently vanishes from
-                            this row while still being included in the
-                            (separately-calculated) total paid. */}
-                      <div className="order-item-row order-subtotal-row">
-                        <span>Subtotal</span>
-                        <span>
-                          {fmt(
-                            o.items.reduce(
-                              (acc, i) => acc + i.price * i.quantity,
-                              0,
-                            ) +
-                              (o.bundles ?? []).reduce(
-                                (acc, b) => acc + b.finalPrice,
-                                0,
-                              ),
-                          )}{" "}
-                          EGP
-                        </span>
-                      </div>
-
-                      {/* Delivery fee row */}
-                      {o.fulfillmentType === "pickup" ? (
-                        <div className="order-item-row order-delivery-row">
-                          <span>
-                            <i className="ti ti-map-pin" /> Pickup from —{" "}
-                            {o.pickupLocation?.name ?? "—"}
-                            {o.pickupLocation?.address && (
-                              <span style={{ opacity: 0.65, fontSize: 12 }}>
-                                {" "}
-                                ({o.pickupLocation.address})
-                              </span>
-                            )}
-                          </span>
-                          <span>Free</span>
-                        </div>
-                      ) : (
-                        <>
-                          {o.deliveryRegion && (
-                            <div className="order-item-row order-delivery-row">
-                              <span>
-                                <i className="ti ti-map-pin" /> Delivery —{" "}
-                                {o.deliveryRegion.name}
-                              </span>
-                              <span>
-                                {o.deliveryRegion.price === 0
-                                  ? "Free"
-                                  : `${fmt(o.deliveryRegion.price)} EGP`}
-                              </span>
-                            </div>
-                          )}
-                          {o.deliveryAddress && (
-                            <div className="order-address-box">
-                              <span className="order-address-label">
-                                <i className="ti ti-map-pin-filled" /> Delivery
-                                address
-                              </span>
-                              <p className="order-address-text">
-                                {o.deliveryAddress}
-                              </p>
-                            </div>
-                          )}
-                        </>
-                      )}
-
-                      {/* Discount row */}
-                      {hasDiscount && (
-                        <div className="order-item-row order-discount-row">
-                          <span className="order-discount-label">
-                            <i className="ti ti-tag" /> Discount (
-                            {o.discountCode})
-                          </span>
-                          <span className="order-discount-saving">
-                            −{fmt(o.discountSavings)} EGP
+                        {/* Total row */}
+                        <div className="order-item-row order-total-row">
+                          <span style={{ fontWeight: 700 }}>Total paid</span>
+                          <span style={{ fontWeight: 700 }}>
+                            {fmt(o.totalPrice)} EGP
                           </span>
                         </div>
-                      )}
-
-                      {/* Total row */}
-                      <div className="order-item-row order-total-row">
-                        <span style={{ fontWeight: 700 }}>Total paid</span>
-                        <span style={{ fontWeight: 700 }}>
-                          {fmt(o.totalPrice)} EGP
-                        </span>
                       </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── Pagination ── */}
+          {pagination.pages > 1 && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 10,
+                marginTop: 20,
+                padding: "20px 0",
+              }}
+            >
+              <button
+                className="btn-ghost"
+                onClick={() => fetchOrders(pagination.page - 1)}
+                disabled={pagination.page === 1}
+              >
+                ← Previous
+              </button>
+
+              <span style={{ fontSize: 14, color: "#9a8878" }}>
+                Page {pagination.page} of {pagination.pages}
+              </span>
+
+              <button
+                className="btn-ghost"
+                onClick={() => fetchOrders(pagination.page + 1)}
+                disabled={pagination.page === pagination.pages}
+              >
+                Next →
+              </button>
+            </div>
+          )}
+        </>
       )}
     </>
   );
@@ -1738,52 +1811,18 @@ const TopItemsTab = ({ refreshKey }) => {
 
   useEffect(() => {
     setLoading(true);
-    API.get("/orders")
-      .then(({ data: orders }) => {
-        const map = {};
-
-        const deliveredOrders = orders.filter((o) => o.status === "delivered");
-
-        deliveredOrders.forEach((order) => {
-          // Count plain items
-          (order.items || []).forEach((item) => {
-            const key = item.productName;
-            if (!map[key]) {
-              map[key] = {
-                name: item.productName,
-                quantity: 0,
-                revenue: 0,
-              };
-            }
-            map[key].quantity += item.quantity;
-            map[key].revenue += item.price * item.quantity;
-          });
-
-          // Count bundle items too
-          (order.bundles || []).forEach((bundle) => {
-            (bundle.items || []).forEach((bi) => {
-              const key = bi.productName;
-
-              if (!map[key]) {
-                map[key] = {
-                  name: bi.productName,
-                  quantity: 0,
-                  revenue: 0,
-                };
-              }
-              map[key].quantity += bi.quantity;
-              map[key].revenue += bi.price * bi.quantity;
-            });
-          });
-        });
-
-        setItems(Object.values(map));
+    API.get("/orders/top-items", {
+      params: { sortBy },
+    })
+      .then(({ data }) => {
+        // Data is already sorted by the backend
+        setItems(data);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [refreshKey]);
+  }, [refreshKey, sortBy]);
 
-  const sorted = [...items].sort((a, b) => b[sortBy] - a[sortBy]);
+  const sorted = items; // Already sorted by backend
   const maxVal = sorted[0]?.[sortBy] ?? 1;
 
   return (

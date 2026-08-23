@@ -9,6 +9,8 @@ const Checkout = () => {
   const { cart, totalPrice, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [loyalty, setLoyalty] = useState(null);
+  const [useReward, setUseReward] = useState(false);
 
   const [form, setForm] = useState({
     name: user?.name || "",
@@ -39,6 +41,12 @@ const Checkout = () => {
   const [instapayStoreNumber, setInstapayStoreNumber] = useState("01XXXXXXXXX");
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (!user) return;
+    API.get("/loyalty/me")
+      .then(({ data }) => setLoyalty(data))
+      .catch(() => setLoyalty(null));
+  }, [user]);
   /* ── pre-fill form from profile ── */
   useEffect(() => {
     if (!user?.token) return;
@@ -239,6 +247,8 @@ const Checkout = () => {
           },
           items: orderItems,
           bundles: orderBundles,
+          useLoyaltyReward: useReward,  
+
           itemsTotal: totalPrice,
           fulfillmentType: form.fulfillmentType,
           deliveryRegionId:
@@ -520,6 +530,28 @@ const Checkout = () => {
         )}
       </div>
 
+      {user && loyalty?.rewardsAvailable > 0 && (
+        <div className="checkout-section">
+          <h2>🎁 Loyalty Reward</h2>
+          <label className="checkout-region-option checkout-region-option--active">
+            <input
+              type="checkbox"
+              checked={useReward}
+              onChange={(e) => setUseReward(e.target.checked)}
+            />
+            <div className="checkout-region-option-text">
+              <span className="checkout-region-name">
+                Add 1 Free Classic LimoRoll
+              </span>
+              <span className="checkout-region-desc">
+                You have {loyalty.rewardsAvailable} reward
+                {loyalty.rewardsAvailable > 1 ? "s" : ""} available
+              </span>
+            </div>
+          </label>
+        </div>
+      )}
+
       {/* ── Delivery Details ── */}
       <div className="checkout-section">
         <h2>Contact Details</h2>
@@ -626,6 +658,18 @@ const Checkout = () => {
               </span>
             </div>
           ))}
+
+          {useReward && (
+            <div className="checkout-summary-row">
+              <span className="checkout-summary-name">
+                Classic LimoRoll{" "}
+                <span className="checkout-summary-qty">
+                  (Free — Loyalty Reward)
+                </span>
+              </span>
+              <span className="checkout-summary-price">0 EGP</span>
+            </div>
+          )}
         </div>
 
         <div className="checkout-summary-row checkout-subtotal-row">

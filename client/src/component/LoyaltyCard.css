@@ -1,0 +1,213 @@
+.loyalty-card {
+  position: relative;
+  background: #f8f0df;
+  border: 1px solid #b8895d;
+  border-radius: 10px;
+  padding: 18px 18px 16px;
+  margin-bottom: 20px;
+  box-shadow:
+    0 2px 4px rgba(74, 45, 25, 0.08),
+    0 8px 18px rgba(74, 45, 25, 0.08);
+  overflow: hidden;
+}
+
+/* Vintage inner frame */
+.loyalty-card::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgba(139, 91, 55, 0.22);
+  border-radius: 7px;
+  pointer-events: none;
+}
+
+/* Decorative corner detail */
+.loyalty-card::after {
+  content: "✦";
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  color: #8b5935;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.loyalty-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
+  position: relative;
+  z-index: 1;
+}
+
+.loyalty-card-header h2 {
+  font-family: "Cormorant Garamond", serif;
+  font-weight: 700;
+  font-size: 1.45rem;
+  letter-spacing: 0.04em;
+  margin: 0;
+  color: #4a2b18;
+  text-transform: uppercase;
+}
+
+/* Small vintage divider */
+.loyalty-card-header::after {
+  content: "◆";
+  position: absolute;
+  left: 50%;
+  bottom: -12px;
+  transform: translateX(-50%);
+  font-size: 0.45rem;
+  color: #8b5935;
+}
+
+/* Loyalty reward badge */
+.loyalty-reward-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #8b5935;
+  color: #fdf7eb;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 4px rgba(74, 45, 25, 0.18);
+}
+
+/* Stamp grid */
+.loyalty-stamps-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin: 18px 0 12px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Empty stamp */
+.loyalty-stamp {
+  aspect-ratio: 1;
+  max-width: 40px;
+  margin: 0 auto;
+  width: 100%;
+
+  border: 1.5px dashed #b8895d;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255, 250, 239, 0.7);
+
+  color: #9a6b47;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.85rem;
+
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+/* Filled stamp */
+.loyalty-stamp--filled {
+  border: 1.5px solid #7b4828;
+  background: #f5ead7;
+
+  box-shadow:
+    0 2px 5px rgba(74, 45, 25, 0.18),
+    inset 0 0 0 2px rgba(123, 72, 40, 0.08);
+
+  transform: scale(1.06);
+
+  overflow: hidden;
+  padding: 0;
+}
+
+/* LIMOS stamp image */
+.loyalty-stamp-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+
+  /* Gives the stamp a slightly aged look */
+  opacity: 0.95;
+}
+
+/* Main note */
+.loyalty-card-note {
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: #76563d;
+  margin: 0 0 9px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Progress / hint */
+.loyalty-card-hint {
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.74rem;
+  color: #7b4828;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 2px 0 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Redeem button */
+.loyalty-redeem-btn {
+  width: 100%;
+  padding: 10px;
+
+  border: 1px solid #6f3f22;
+  border-radius: 6px;
+
+  background: #7b4828;
+  color: #fffaf0;
+
+  font-family: "DM Sans", sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+
+  cursor: pointer;
+  margin-top: 7px;
+
+  box-shadow: 0 2px 5px rgba(74, 45, 25, 0.2);
+
+  position: relative;
+  z-index: 1;
+
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.loyalty-redeem-btn:hover {
+  background: #633719;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(74, 45, 25, 0.22);
+}
+
+.loyalty-redeem-btn:active {
+  transform: translateY(0);
+}
+.loyalty-stamp {
+  max-width: 42px;
+}
+.loyalty-stamp-img {
+  object-fit: contain;
+}

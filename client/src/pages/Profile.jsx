@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import API from "../api/axios";
 import "./Profile.css";
+import LoyaltyCard from "../component/LoyaltyCard";
 
 const Profile = () => {
   const { user, login } = useAuth();
@@ -18,6 +19,9 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const [loyalty, setLoyalty] = useState(null);
+  const [loyaltyLoading, setLoyaltyLoading] = useState(true);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -41,6 +45,21 @@ const Profile = () => {
       }
     };
     fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    const fetchLoyalty = async () => {
+      try {
+        const { data } = await API.get("/loyalty/me");
+        setLoyalty(data);
+      } catch (err) {
+        // fail silently — loyalty card just won't render
+        setLoyalty(null);
+      } finally {
+        setLoyaltyLoading(false);
+      }
+    };
+    fetchLoyalty();
   }, []);
 
   const handleChange = (e) => {
@@ -77,6 +96,20 @@ const Profile = () => {
     }
   };
 
+  const handleRedeem = async () => {
+    try {
+      await API.post("/loyalty/redeem");
+      const { data } = await API.get("/loyalty/me");
+      setLoyalty(data);
+    } catch (err) {
+      setError(
+        err?.response?.data?.message ||
+          err.message ||
+          "Failed to redeem reward.",
+      );
+    }
+  };
+
   if (loading) return <div className="profile-loading">Loading...</div>;
 
   return (
@@ -90,6 +123,10 @@ const Profile = () => {
           <p className="profile-role">{user?.role}</p>
         </div>
       </div>
+
+      {!loyaltyLoading && loyalty && (
+        <LoyaltyCard loyalty={loyalty} onRedeem={handleRedeem} />
+      )}
 
       <div className="profile-section">
         <h2>Personal Info</h2>
